@@ -1,4 +1,3 @@
-
 import React, { useEffect, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -34,7 +33,7 @@ const Home: React.FC = () => {
         {/* Hero Section */}
         <section className="py-12 md:py-24 flex flex-col items-center text-center">
           <div className={`mb-6 transform transition-all duration-700 ${showLogo ? 'opacity-100 scale-100' : 'opacity-0 scale-95'}`}>
-            <Logo className="h-24 w-24 mx-auto" />
+            <Logo size="lg" className="mx-auto" />
           </div>
           
           <h1 
