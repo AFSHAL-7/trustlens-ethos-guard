@@ -11,17 +11,18 @@ const Logo: React.FC<LogoProps> = ({
   size = "md" 
 }) => {
   const sizeClasses = {
-    sm: "h-8 w-8",
-    md: "h-12 w-12",
-    lg: "h-16 w-16"
+    sm: "h-6 w-auto", // Smaller size for navbar
+    md: "h-12 w-auto", // Medium size for general use
+    lg: "h-24 w-auto"  // Larger size for hero sections
   };
 
   return (
-    <div className={`relative ${sizeClasses[size]} ${className}`}>
+    <div className={`relative flex items-center justify-center ${className}`}>
       <img 
         src="/lovable-uploads/d38a1a89-1273-40ff-85f8-ea44bf7a7b80.png" 
         alt="TrustLens Logo" 
-        className="absolute inset-0 object-contain z-10"
+        className={`${sizeClasses[size]} object-contain`}
+        style={{ maxWidth: '100%' }}
       />
     </div>
   );
