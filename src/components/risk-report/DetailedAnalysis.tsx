@@ -14,7 +14,7 @@ interface DetailedAnalysisProps {
   summary: SummarySection[];
 }
 
-export const DetailedAnalysis: React.FC<DetailedAnalysisProps> = ({ summary }) => {
+const DetailedAnalysis: React.FC<DetailedAnalysisProps> = ({ summary }) => {
   const getSeverityBadgeColor = (severity: string) => {
     switch (severity) {
       case 'high': return 'bg-red-100 text-red-800 border-red-200';
@@ -59,3 +59,5 @@ export const DetailedAnalysis: React.FC<DetailedAnalysisProps> = ({ summary }) =
     </Card>
   );
 };
+
+export default DetailedAnalysis;

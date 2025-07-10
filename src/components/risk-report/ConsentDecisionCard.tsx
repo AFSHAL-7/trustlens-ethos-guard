@@ -9,7 +9,7 @@ interface ConsentDecisionCardProps {
   consentAction: 'allow' | 'partial' | 'deny' | null;
 }
 
-export const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({ 
+const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({ 
   onConsent, 
   consentAction 
 }) => {
@@ -62,3 +62,5 @@ export const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
     </Card>
   );
 };
+
+export default ConsentDecisionCard;

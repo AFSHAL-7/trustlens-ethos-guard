@@ -7,7 +7,7 @@ interface OriginalDocumentProps {
   consentText: string;
 }
 
-export const OriginalDocument: React.FC<OriginalDocumentProps> = ({ consentText }) => {
+const OriginalDocument: React.FC<OriginalDocumentProps> = ({ consentText }) => {
   return (
     <Card>
       <CardHeader>
@@ -24,3 +24,5 @@ export const OriginalDocument: React.FC<OriginalDocumentProps> = ({ consentText 
     </Card>
   );
 };
+
+export default OriginalDocument;

@@ -8,12 +8,12 @@ import { ArrowLeft, Download, FileText, Shield, AlertTriangle, CheckCircle, XCir
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import RiskScoreCard from '@/components/risk-report/RiskScoreCard';
-import DocumentAnalysisCard from '@/components/risk-report/DocumentAnalysisCard';
-import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
-import RiskItemsList from '@/components/risk-report/RiskItemsList';
-import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
-import OriginalDocument from '@/components/risk-report/OriginalDocument';
+import { RiskScoreCard } from '@/components/risk-report/RiskScoreCard';
+import { DocumentAnalysisCard } from '@/components/risk-report/DocumentAnalysisCard';
+import { ConsentDecisionCard } from '@/components/risk-report/ConsentDecisionCard';
+import { RiskItemsList } from '@/components/risk-report/RiskItemsList';
+import { DetailedAnalysis } from '@/components/risk-report/DetailedAnalysis';
+import { OriginalDocument } from '@/components/risk-report/OriginalDocument';
 
 export interface RiskItem {
   clause: string;
@@ -88,14 +88,14 @@ const RiskReport: React.FC = () => {
     setSaving(true);
 
     try {
-      // Save the consent analysis to database
+      // Save the consent analysis to database - convert arrays to JSON
       const analysisData = {
         user_id: user.id,
         document_title: mockData.documentTitle,
         risk_score: mockData.riskScore,
         consent_decision: decision,
-        risk_items: mockData.riskItems,
-        summary_sections: mockData.summaryData,
+        risk_items: JSON.stringify(mockData.riskItems),
+        summary_sections: JSON.stringify(mockData.summaryData),
         original_text: mockData.originalText
       };
 
@@ -206,27 +206,51 @@ const RiskReport: React.FC = () => {
         <div className="lg:col-span-2 space-y-6">
           <RiskScoreCard 
             riskScore={mockData.riskScore}
-            getRiskColor={getRiskColor}
-            getRiskIcon={getRiskIcon}
           />
           
           <DocumentAnalysisCard 
-            documentTitle={mockData.documentTitle}
-            riskItems={mockData.riskItems}
+            risks={mockData.riskItems.map((item, index) => ({
+              id: `risk-${index}`,
+              title: item.clause,
+              description: item.risk,
+              severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+              category: 'Privacy',
+              specific_clause: item.clause,
+              impact: item.impact,
+              recommendation: item.recommendation
+            }))}
           />
           
-          <RiskItemsList riskItems={mockData.riskItems} />
+          <RiskItemsList risks={mockData.riskItems.map((item, index) => ({
+            id: `risk-${index}`,
+            title: item.clause,
+            description: item.risk,
+            severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+            category: 'Privacy',
+            specific_clause: item.clause,
+            impact: item.impact,
+            recommendation: item.recommendation
+          }))} />
           
-          <DetailedAnalysis summaryData={mockData.summaryData} />
+          <DetailedAnalysis summary={mockData.summaryData.map(section => ({
+            title: section.title,
+            content: section.content,
+            risk_level: section.riskLevel,
+            specific_issues: [
+              "Extensive data collection beyond necessary functionality",
+              "Unclear data retention policies",
+              "Limited user control over personal information"
+            ]
+          }))} />
           
-          <OriginalDocument originalText={mockData.originalText} />
+          <OriginalDocument consentText={mockData.originalText} />
         </div>
 
         {/* Sidebar */}
         <div className="space-y-6">
           <ConsentDecisionCard 
-            onSaveDecision={handleSaveDecision}
-            consentDecision={consentDecision}
+            onConsent={handleSaveDecision}
+            consentAction={consentDecision}
             saving={saving}
           />
         </div>

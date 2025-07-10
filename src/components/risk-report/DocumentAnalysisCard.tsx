@@ -18,7 +18,7 @@ interface DocumentAnalysisCardProps {
   risks: RiskItem[];
 }
 
-export const DocumentAnalysisCard: React.FC<DocumentAnalysisCardProps> = ({ risks }) => {
+const DocumentAnalysisCard: React.FC<DocumentAnalysisCardProps> = ({ risks }) => {
   return (
     <Card className="col-span-1">
       <CardHeader>
@@ -52,3 +52,5 @@ export const DocumentAnalysisCard: React.FC<DocumentAnalysisCardProps> = ({ risk
     </Card>
   );
 };
+
+export default DocumentAnalysisCard;

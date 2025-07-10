@@ -18,7 +18,7 @@ interface RiskItemsListProps {
   risks: RiskItem[];
 }
 
-export const RiskItemsList: React.FC<RiskItemsListProps> = ({ risks }) => {
+const RiskItemsList: React.FC<RiskItemsListProps> = ({ risks }) => {
   const getRiskColor = (severity: string) => {
     switch (severity) {
       case 'high': return 'bg-red-500';
@@ -97,3 +97,5 @@ export const RiskItemsList: React.FC<RiskItemsListProps> = ({ risks }) => {
     </Card>
   );
 };
+
+export default RiskItemsList;

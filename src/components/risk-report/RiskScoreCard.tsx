@@ -8,7 +8,7 @@ interface RiskScoreCardProps {
   riskScore: number;
 }
 
-export const RiskScoreCard: React.FC<RiskScoreCardProps> = ({ riskScore }) => {
+const RiskScoreCard: React.FC<RiskScoreCardProps> = ({ riskScore }) => {
   return (
     <Card className="col-span-1">
       <CardHeader>
@@ -45,3 +45,5 @@ export const RiskScoreCard: React.FC<RiskScoreCardProps> = ({ riskScore }) => {
     </Card>
   );
 };
+
+export default RiskScoreCard;
