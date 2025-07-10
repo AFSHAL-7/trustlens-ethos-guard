@@ -8,12 +8,12 @@ import { ArrowLeft, Download, FileText, Shield, AlertTriangle, CheckCircle, XCir
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import { RiskScoreCard } from '@/components/risk-report/RiskScoreCard';
-import { DocumentAnalysisCard } from '@/components/risk-report/DocumentAnalysisCard';
-import { ConsentDecisionCard } from '@/components/risk-report/ConsentDecisionCard';
-import { RiskItemsList } from '@/components/risk-report/RiskItemsList';
-import { DetailedAnalysis } from '@/components/risk-report/DetailedAnalysis';
-import { OriginalDocument } from '@/components/risk-report/OriginalDocument';
+import RiskScoreCard from '@/components/risk-report/RiskScoreCard';
+import DocumentAnalysisCard from '@/components/risk-report/DocumentAnalysisCard';
+import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
+import RiskItemsList from '@/components/risk-report/RiskItemsList';
+import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
+import OriginalDocument from '@/components/risk-report/OriginalDocument';
 
 export interface RiskItem {
   clause: string;
