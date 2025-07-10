@@ -14,13 +14,81 @@ export type Database = {
   }
   public: {
     Tables: {
+      consent_analyses: {
+        Row: {
+          analyzed_at: string | null
+          consent_decision: string | null
+          created_at: string | null
+          document_title: string
+          id: string
+          original_text: string | null
+          risk_items: Json
+          risk_score: number
+          summary_sections: Json
+          user_id: string
+        }
+        Insert: {
+          analyzed_at?: string | null
+          consent_decision?: string | null
+          created_at?: string | null
+          document_title: string
+          id?: string
+          original_text?: string | null
+          risk_items?: Json
+          risk_score: number
+          summary_sections?: Json
+          user_id: string
+        }
+        Update: {
+          analyzed_at?: string | null
+          consent_decision?: string | null
+          created_at?: string | null
+          document_title?: string
+          id?: string
+          original_text?: string | null
+          risk_items?: Json
+          risk_score?: number
+          summary_sections?: Json
+          user_id?: string
+        }
+        Relationships: []
+      }
+      profiles: {
+        Row: {
+          avatar_url: string | null
+          created_at: string | null
+          email: string | null
+          full_name: string | null
+          id: string
+          updated_at: string | null
+        }
+        Insert: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id: string
+          updated_at?: string | null
+        }
+        Update: {
+          avatar_url?: string | null
+          created_at?: string | null
+          email?: string | null
+          full_name?: string | null
+          id?: string
+          updated_at?: string | null
+        }
+        Relationships: []
+      }
       user_stats: {
         Row: {
           average_risk_score: number | null
           consent_decisions_count: number | null
           created_at: string | null
+          high_risk_analyses: number | null
           id: string
           last_active: string | null
+          total_analyses: number | null
           updated_at: string | null
           user_id: string
         }
@@ -28,8 +96,10 @@ export type Database = {
           average_risk_score?: number | null
           consent_decisions_count?: number | null
           created_at?: string | null
+          high_risk_analyses?: number | null
           id?: string
           last_active?: string | null
+          total_analyses?: number | null
           updated_at?: string | null
           user_id: string
         }
@@ -37,8 +107,10 @@ export type Database = {
           average_risk_score?: number | null
           consent_decisions_count?: number | null
           created_at?: string | null
+          high_risk_analyses?: number | null
           id?: string
           last_active?: string | null
+          total_analyses?: number | null
           updated_at?: string | null
           user_id?: string
         }

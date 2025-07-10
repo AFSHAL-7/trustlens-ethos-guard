@@ -1,9 +1,11 @@
 
 import React from 'react';
-import { NavLink } from 'react-router-dom';
-import { Menu, Settings, User } from 'lucide-react';
+import { NavLink, useNavigate } from 'react-router-dom';
+import { Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
+import UserProfileDropdown from './UserProfileDropdown';
+import { useAuth } from '@/contexts/AuthContext';
 
 interface NavbarProps {
   toggleSidebar: () => void;
@@ -11,6 +13,9 @@ interface NavbarProps {
 }
 
 const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
+  const { user, loading } = useAuth();
+  const navigate = useNavigate();
+
   return (
     <header className="bg-white shadow-sm z-10">
       <div className="container mx-auto px-4">
@@ -72,9 +77,16 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <Button variant="ghost" size="icon" className="text-gray-600">
               <Settings className="h-5 w-5" />
             </Button>
-            <Button variant="ghost" size="icon" className="text-gray-600">
-              <User className="h-5 w-5" />
-            </Button>
+            
+            {loading ? (
+              <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+            ) : user ? (
+              <UserProfileDropdown />
+            ) : (
+              <Button onClick={() => navigate('/auth')} variant="outline">
+                Sign In
+              </Button>
+            )}
           </div>
         </div>
       </div>
