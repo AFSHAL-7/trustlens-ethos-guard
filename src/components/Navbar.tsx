@@ -5,6 +5,7 @@ import { Menu, Settings } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import Logo from './Logo';
 import UserProfileDropdown from './UserProfileDropdown';
+import ThemeToggle from './ThemeToggle';
 import { useAuth } from '@/contexts/AuthContext';
 
 interface NavbarProps {
@@ -17,7 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white shadow-sm z-10">
+    <header className="bg-white dark:bg-gray-900 shadow-sm z-10 border-b dark:border-gray-700">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
@@ -27,7 +28,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <div className="flex-shrink-0">
               <NavLink to="/" className="flex items-center">
                 <Logo size="sm" className="mr-2" />
-                <span className="ml-2 text-xl font-poppins font-semibold text-trustlens-charcoal">
+                <span className="ml-2 text-xl font-poppins font-semibold text-trustlens-charcoal dark:text-white">
                   TrustLens
                 </span>
               </NavLink>
@@ -39,7 +40,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
               className={({ isActive }) => 
                 isActive 
                   ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 hover:text-trustlens-blue transition-colors duration-300"
+                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
               }
             >
               Home
@@ -48,7 +49,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
               className={({ isActive }) => 
                 isActive 
                   ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 hover:text-trustlens-blue transition-colors duration-300"
+                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
               }
             >
               Consent Analyzer
@@ -57,7 +58,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
               className={({ isActive }) => 
                 isActive 
                   ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 hover:text-trustlens-blue transition-colors duration-300"
+                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
               }
             >
               Dashboard
@@ -66,7 +67,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
               className={({ isActive }) => 
                 isActive 
                   ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 hover:text-trustlens-blue transition-colors duration-300"
+                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
               }
             >
               Admin
@@ -74,7 +75,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
           </nav>
           
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="text-gray-600">
+            <ThemeToggle />
+            <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-300">
               <Settings className="h-5 w-5" />
             </Button>
             

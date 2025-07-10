@@ -1,4 +1,3 @@
-
 import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -70,7 +69,7 @@ const Dashboard: React.FC = () => {
     
     if (newConsent) {
       const consentRecord: ConsentRecord = {
-        id: (consents.length + 1).toString(),
+        id: Date.now().toString(), // Use timestamp as ID to avoid conflicts
         title: newConsent.title,
         action: newConsent.action,
         timestamp: newConsent.timestamp,
@@ -82,7 +81,7 @@ const Dashboard: React.FC = () => {
       // Clear location state to avoid duplication on page refresh
       window.history.replaceState({}, document.title);
     }
-  }, [location.state, consents.length]);
+  }, [location.state]);
   
   const getActionIcon = (action: string) => {
     switch(action) {
@@ -104,6 +103,52 @@ const Dashboard: React.FC = () => {
   const getFilteredConsents = (filterType: 'all' | 'allow' | 'partial' | 'deny') => {
     if (filterType === 'all') return consents;
     return consents.filter(consent => consent.action === filterType);
+  };
+
+  const renderConsentList = (filteredConsents: ConsentRecord[]) => {
+    if (filteredConsents.length === 0) {
+      return (
+        <div className="text-center py-12">
+          <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
+          <p className="text-lg font-medium">No consent records found</p>
+          <p className="text-gray-600">Records will appear here when you analyze documents</p>
+        </div>
+      );
+    }
+    
+    return (
+      <div className="space-y-4">
+        {filteredConsents.map((consent) => (
+          <div 
+            key={consent.id}
+            className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+          >
+            <div className="flex items-center">
+              <div className="mr-4">
+                {getActionIcon(consent.action)}
+              </div>
+              <div>
+                <h3 className="font-medium">{consent.title}</h3>
+                <p className="text-sm text-gray-500">{formatDate(consent.timestamp)}</p>
+              </div>
+            </div>
+            <div className="text-right">
+              <div 
+                className={`inline-block text-sm font-medium px-2 py-1 rounded-full ${
+                  consent.riskScore > 80
+                    ? 'bg-red-100 text-red-700'
+                    : consent.riskScore > 60
+                      ? 'bg-orange-100 text-orange-700'
+                      : 'bg-green-100 text-green-700'
+                }`}
+              >
+                Risk Score: {consent.riskScore}%
+              </div>
+            </div>
+          </div>
+        ))}
+      </div>
+    );
   };
 
   return (
@@ -244,52 +289,6 @@ const Dashboard: React.FC = () => {
       </Card>
     </div>
   );
-  
-  function renderConsentList(filteredConsents: ConsentRecord[]) {
-    if (filteredConsents.length === 0) {
-      return (
-        <div className="text-center py-12">
-          <Search className="h-12 w-12 text-gray-300 mx-auto mb-4" />
-          <p className="text-lg font-medium">No consent records found</p>
-          <p className="text-gray-600">Records will appear here when you analyze documents</p>
-        </div>
-      );
-    }
-    
-    return (
-      <div className="space-y-4">
-        {filteredConsents.map((consent) => (
-          <div 
-            key={consent.id}
-            className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
-          >
-            <div className="flex items-center">
-              <div className="mr-4">
-                {getActionIcon(consent.action)}
-              </div>
-              <div>
-                <h3 className="font-medium">{consent.title}</h3>
-                <p className="text-sm text-gray-500">{formatDate(consent.timestamp)}</p>
-              </div>
-            </div>
-            <div className="text-right">
-              <div 
-                className={`inline-block text-sm font-medium px-2 py-1 rounded-full ${
-                  consent.riskScore > 80
-                    ? 'bg-red-100 text-red-700'
-                    : consent.riskScore > 60
-                      ? 'bg-orange-100 text-orange-700'
-                      : 'bg-green-100 text-green-700'
-                }`}
-              >
-                Risk Score: {consent.riskScore}%
-              </div>
-            </div>
-          </div>
-        ))}
-      </div>
-    );
-  }
 };
 
 export default Dashboard;
