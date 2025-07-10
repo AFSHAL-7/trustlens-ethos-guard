@@ -197,12 +197,19 @@ const RiskReport: React.FC = () => {
         return null;
       }
 
-      // Update user stats
-      const { error: statsError } = await supabase.rpc('increment_user_stats', {
-        user_id: user.id,
-        new_risk_score: riskScore,
-        is_high_risk: riskScore >= 80
-      });
+      // Update user stats using direct database update
+      const { error: statsError } = await supabase
+        .from('user_stats')
+        .upsert({
+          user_id: user.id,
+          total_analyses: 1,
+          high_risk_analyses: riskScore >= 80 ? 1 : 0,
+          average_risk_score: riskScore,
+          consent_decisions_count: 1,
+          last_active: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
+        });
 
       if (statsError) {
         console.error('Error updating stats:', statsError);
