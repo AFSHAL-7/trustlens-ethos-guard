@@ -86,7 +86,23 @@
   }
 
   h1, h2, h3, h4, h5, h6 {
-    @apply font-poppins font-semibold;
+    @apply font-poppins font-semibold text-foreground;
+  }
+
+  p {
+    @apply text-foreground;
+  }
+
+  .text-gray-600 {
+    @apply text-muted-foreground;
+  }
+
+  .text-gray-700 {
+    @apply text-foreground;
+  }
+
+  .text-gray-800 {
+    @apply text-foreground;
   }
 }
 
@@ -108,7 +124,7 @@
   }
 
   .card {
-    @apply bg-white dark:bg-gray-800 rounded-2xl shadow-soft p-6 transition-all duration-300;
+    @apply bg-card dark:bg-card rounded-2xl shadow-soft p-6 transition-all duration-300;
   }
 
   .card-hover {
@@ -116,6 +132,6 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-2xl border border-gray-200 dark:border-gray-700 focus:border-trustlens-blue focus:ring focus:ring-blue-100 transition-all duration-300;
+    @apply w-full px-4 py-3 rounded-2xl border border-border focus:border-primary focus:ring focus:ring-ring/20 transition-all duration-300;
   }
 }

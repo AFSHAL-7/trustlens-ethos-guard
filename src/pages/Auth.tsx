@@ -7,7 +7,7 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Loader2 } from 'lucide-react';
 import Logo from '@/components/Logo';
 
 const Auth = () => {
@@ -116,111 +116,137 @@ const Auth = () => {
   };
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 to-indigo-100 p-4">
-      <Card className="w-full max-w-md shadow-xl">
-        <CardHeader className="text-center pb-2">
-          <div className="flex justify-center mb-4">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-100 p-4 animate-fade-in">
+      <Card className="w-full max-w-md shadow-2xl border-0 animate-scale-in">
+        <CardHeader className="text-center pb-4 space-y-4">
+          <div className="flex justify-center">
             <Logo size="lg" />
           </div>
-          <CardTitle className="text-2xl font-bold text-trustlens-charcoal">
-            Welcome to TrustLens
-          </CardTitle>
-          <p className="text-gray-600">AI-powered consent analysis platform</p>
+          <div className="space-y-2">
+            <CardTitle className="text-3xl font-bold text-foreground">
+              Welcome to TrustLens
+            </CardTitle>
+            <p className="text-muted-foreground text-base">
+              AI-powered consent analysis platform
+            </p>
+          </div>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-6">
           <Tabs defaultValue="signin" className="w-full">
-            <TabsList className="grid w-full grid-cols-2">
-              <TabsTrigger value="signin">Sign In</TabsTrigger>
-              <TabsTrigger value="signup">Sign Up</TabsTrigger>
+            <TabsList className="grid w-full grid-cols-2 bg-muted/50">
+              <TabsTrigger value="signin" className="data-[state=active]:bg-background">Sign In</TabsTrigger>
+              <TabsTrigger value="signup" className="data-[state=active]:bg-background">Sign Up</TabsTrigger>
             </TabsList>
             
-            <TabsContent value="signin" className="space-y-4 mt-6">
-              <form onSubmit={handleSignIn} className="space-y-4">
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <TabsContent value="signin" className="space-y-6 mt-8 animate-fade-in">
+              <form onSubmit={handleSignIn} className="space-y-5">
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type="email"
                     name="email"
-                    placeholder="Email"
+                    placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10"
+                    className="pl-10 h-12 bg-background border-border focus:border-primary transition-all duration-200"
                     required
                   />
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    placeholder="Password"
+                    placeholder="Enter your password"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 h-12 bg-background border-border focus:border-primary transition-all duration-200"
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Signing in...' : 'Sign In'}
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 disabled:opacity-50" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Signing in...
+                    </>
+                  ) : (
+                    'Sign In'
+                  )}
                 </Button>
               </form>
             </TabsContent>
 
-            <TabsContent value="signup" className="space-y-4 mt-6">
-              <form onSubmit={handleSignUp} className="space-y-4">
-                <div className="relative">
-                  <User className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+            <TabsContent value="signup" className="space-y-6 mt-8 animate-fade-in">
+              <form onSubmit={handleSignUp} className="space-y-5">
+                <div className="relative group">
+                  <User className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type="text"
                     name="fullName"
-                    placeholder="Full Name"
+                    placeholder="Enter your full name"
                     value={formData.fullName}
                     onChange={handleInputChange}
-                    className="pl-10"
+                    className="pl-10 h-12 bg-background border-border focus:border-primary transition-all duration-200"
                     required
                   />
                 </div>
-                <div className="relative">
-                  <Mail className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div className="relative group">
+                  <Mail className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type="email"
                     name="email"
-                    placeholder="Email"
+                    placeholder="Enter your email"
                     value={formData.email}
                     onChange={handleInputChange}
-                    className="pl-10"
+                    className="pl-10 h-12 bg-background border-border focus:border-primary transition-all duration-200"
                     required
                   />
                 </div>
-                <div className="relative">
-                  <Lock className="absolute left-3 top-3 h-4 w-4 text-gray-400" />
+                <div className="relative group">
+                  <Lock className="absolute left-3 top-3 h-4 w-4 text-muted-foreground group-focus-within:text-primary transition-colors" />
                   <Input
                     type={showPassword ? 'text' : 'password'}
                     name="password"
-                    placeholder="Password (min 6 characters)"
+                    placeholder="Create a password (min 6 characters)"
                     value={formData.password}
                     onChange={handleInputChange}
-                    className="pl-10 pr-10"
+                    className="pl-10 pr-10 h-12 bg-background border-border focus:border-primary transition-all duration-200"
                     minLength={6}
                     required
                   />
                   <button
                     type="button"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-3 text-gray-400 hover:text-gray-600"
+                    className="absolute right-3 top-3 text-muted-foreground hover:text-primary transition-colors"
                   >
                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                   </button>
                 </div>
-                <Button type="submit" className="w-full" disabled={loading}>
-                  {loading ? 'Creating account...' : 'Create Account'}
+                <Button 
+                  type="submit" 
+                  className="w-full h-12 bg-primary hover:bg-primary/90 text-primary-foreground font-medium transition-all duration-200 disabled:opacity-50" 
+                  disabled={loading}
+                >
+                  {loading ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Creating account...
+                    </>
+                  ) : (
+                    'Create Account'
+                  )}
                 </Button>
               </form>
             </TabsContent>

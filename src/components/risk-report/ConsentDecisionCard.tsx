@@ -14,13 +14,13 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
   consentAction 
 }) => {
   return (
-    <Card className="col-span-1 bg-gradient-to-r from-blue-50 to-blue-100 border-none">
+    <Card className="col-span-1 bg-gradient-to-r from-blue-50 to-blue-100 border-none shadow-soft animate-fade-in">
       <CardHeader>
-        <CardTitle>Your Decision</CardTitle>
+        <CardTitle className="text-foreground">Your Decision</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Button 
-          className="w-full bg-trustlens-green hover:bg-green-600 flex justify-between items-center" 
+          className="w-full bg-trustlens-green hover:bg-green-600 text-white flex justify-between items-center transition-all duration-300 hover:scale-105" 
           onClick={() => onConsent('allow')}
           disabled={consentAction !== null}
         >
@@ -30,7 +30,7 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
         
         <Button 
           variant="outline" 
-          className="w-full border-orange-400 text-orange-600 hover:bg-orange-50 flex justify-between items-center" 
+          className="w-full border-orange-400 text-orange-600 hover:bg-orange-50 flex justify-between items-center transition-all duration-300 hover:scale-105" 
           onClick={() => onConsent('partial')}
           disabled={consentAction !== null}
         >
@@ -40,7 +40,7 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
         
         <Button 
           variant="outline" 
-          className="w-full border-red-400 text-red-600 hover:bg-red-50 flex justify-between items-center" 
+          className="w-full border-red-400 text-red-600 hover:bg-red-50 flex justify-between items-center transition-all duration-300 hover:scale-105" 
           onClick={() => onConsent('deny')}
           disabled={consentAction !== null}
         >
@@ -49,8 +49,8 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
         </Button>
       </CardContent>
       {consentAction && (
-        <CardFooter>
-          <p className="text-sm text-gray-600 italic">
+        <CardFooter className="animate-fade-in">
+          <p className="text-sm text-muted-foreground italic">
             {consentAction === 'allow' 
               ? 'Full consent granted. Saving analysis...' 
               : consentAction === 'partial'

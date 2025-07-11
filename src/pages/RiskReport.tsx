@@ -1,3 +1,4 @@
+
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
@@ -165,51 +166,52 @@ const RiskReport: React.FC = () => {
     }
   };
 
-  const getRiskColor = (score: number) => {
-    if (score >= 80) return 'text-red-600';
-    if (score >= 60) return 'text-orange-600';
-    return 'text-green-600';
-  };
-
-  const getRiskIcon = (score: number) => {
-    if (score >= 80) return <XCircle className="h-6 w-6 text-red-600" />;
-    if (score >= 60) return <AlertTriangle className="h-6 w-6 text-orange-600" />;
-    return <CheckCircle className="h-6 w-6 text-green-600" />;
-  };
-
   return (
-    <div className="page-transition">
-      <div className="mb-6">
-        <Button 
-          variant="ghost" 
-          onClick={() => navigate('/analyzer')}
-          className="mb-4"
-        >
-          <ArrowLeft className="mr-2 h-4 w-4" />
-          Back to Analyzer
-        </Button>
-        
-        <div className="flex items-center justify-between">
-          <div>
-            <h1 className="text-3xl font-bold mb-2">Risk Analysis Report</h1>
-            <p className="text-gray-600">Detailed analysis of consent document risks and recommendations</p>
-          </div>
-          <Button variant="outline" size="sm">
-            <Download className="mr-2 h-4 w-4" />
-            Export Report
+    <div className="page-transition min-h-screen bg-background">
+      <div className="container mx-auto px-4 py-6">
+        <div className="mb-8 animate-fade-in">
+          <Button 
+            variant="ghost" 
+            onClick={() => navigate('/analyzer')}
+            className="mb-6 text-muted-foreground hover:text-foreground transition-colors"
+          >
+            <ArrowLeft className="mr-2 h-4 w-4" />
+            Back to Analyzer
           </Button>
-        </div>
-      </div>
-
-      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
-        {/* Main Content */}
-        <div className="lg:col-span-2 space-y-6">
-          <RiskScoreCard 
-            riskScore={mockData.riskScore}
-          />
           
-          <DocumentAnalysisCard 
-            risks={mockData.riskItems.map((item, index) => ({
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-4xl font-bold mb-3 text-foreground">Risk Analysis Report</h1>
+              <p className="text-muted-foreground text-lg">Comprehensive analysis of consent document risks and recommendations</p>
+            </div>
+            <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
+              <Download className="mr-2 h-4 w-4" />
+              Export Report
+            </Button>
+          </div>
+        </div>
+
+        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+          {/* Main Content */}
+          <div className="lg:col-span-2 space-y-8">
+            <RiskScoreCard 
+              riskScore={mockData.riskScore}
+            />
+            
+            <DocumentAnalysisCard 
+              risks={mockData.riskItems.map((item, index) => ({
+                id: `risk-${index}`,
+                title: item.clause,
+                description: item.risk,
+                severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+                category: 'Privacy',
+                specific_clause: item.clause,
+                impact: item.impact,
+                recommendation: item.recommendation
+              }))}
+            />
+            
+            <RiskItemsList risks={mockData.riskItems.map((item, index) => ({
               id: `risk-${index}`,
               title: item.clause,
               description: item.risk,
@@ -218,41 +220,29 @@ const RiskReport: React.FC = () => {
               specific_clause: item.clause,
               impact: item.impact,
               recommendation: item.recommendation
-            }))}
-          />
-          
-          <RiskItemsList risks={mockData.riskItems.map((item, index) => ({
-            id: `risk-${index}`,
-            title: item.clause,
-            description: item.risk,
-            severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
-            category: 'Privacy',
-            specific_clause: item.clause,
-            impact: item.impact,
-            recommendation: item.recommendation
-          }))} />
-          
-          <DetailedAnalysis summary={mockData.summaryData.map(section => ({
-            title: section.title,
-            content: section.content,
-            risk_level: section.riskLevel,
-            specific_issues: [
-              "Extensive data collection beyond necessary functionality",
-              "Unclear data retention policies",
-              "Limited user control over personal information"
-            ]
-          }))} />
-          
-          <OriginalDocument consentText={mockData.originalText} />
-        </div>
+            }))} />
+            
+            <DetailedAnalysis summary={mockData.summaryData.map(section => ({
+              title: section.title,
+              content: section.content,
+              risk_level: section.riskLevel,
+              specific_issues: [
+                "Extensive data collection beyond necessary functionality",
+                "Unclear data retention policies",
+                "Limited user control over personal information"
+              ]
+            }))} />
+            
+            <OriginalDocument consentText={mockData.originalText} />
+          </div>
 
-        {/* Sidebar */}
-        <div className="space-y-6">
-          <ConsentDecisionCard 
-            onConsent={handleSaveDecision}
-            consentAction={consentDecision}
-            saving={saving}
-          />
+          {/* Sidebar */}
+          <div className="space-y-6">
+            <ConsentDecisionCard 
+              onConsent={handleSaveDecision}
+              consentAction={consentDecision}
+            />
+          </div>
         </div>
       </div>
     </div>
