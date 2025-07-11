@@ -8,7 +8,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, Loader2, Shield } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Loader2, Shield, CheckCircle, AlertCircle } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -101,7 +101,10 @@ const Auth = () => {
       console.log('Signup successful:', data);
 
       if (data.user && !data.session) {
-        toast.success('Account created! Please check your email to verify your account before signing in.');
+        toast.success('Account created! Please check your email to verify your account before signing in.', {
+          duration: 6000,
+          description: 'Look for a confirmation email from Supabase'
+        });
         setActiveTab('signin');
         setFormData(prev => ({ ...prev, password: '', confirmPassword: '', fullName: '' }));
       } else if (data.session) {
@@ -134,9 +137,26 @@ const Auth = () => {
         console.error('Sign in error:', error);
         
         if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password. Please check your credentials.');
+          toast.error('Invalid email or password. Please check your credentials or verify your email first.', {
+            duration: 5000,
+            description: 'If you just signed up, please check your email for a confirmation link'
+          });
         } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Please check your email and click the confirmation link before signing in.');
+          toast.error('Please check your email and click the confirmation link before signing in.', {
+            duration: 6000,
+            action: {
+              label: 'Resend Email',
+              onClick: async () => {
+                const { error: resendError } = await supabase.auth.resend({
+                  type: 'signup',
+                  email: formData.email
+                });
+                if (!resendError) {
+                  toast.success('Confirmation email resent!');
+                }
+              }
+            }
+          });
         } else if (error.message.includes('Too many requests')) {
           toast.error('Too many login attempts. Please wait a moment and try again.');
         } else {
@@ -184,7 +204,7 @@ const Auth = () => {
   // Show loading spinner while checking auth state
   if (authLoading) {
     return (
-      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-100">
+      <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-background to-blue-50/50 dark:from-gray-900 dark:via-background dark:to-gray-900/50">
         <div className="flex items-center space-x-2">
           <Loader2 className="h-6 w-6 animate-spin text-primary" />
           <span className="text-muted-foreground">Loading...</span>
@@ -194,8 +214,8 @@ const Auth = () => {
   }
 
   return (
-    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-white to-indigo-100 p-4 animate-fade-in">
-      <Card className="w-full max-w-md shadow-2xl border-0 animate-scale-in bg-white/95 backdrop-blur-sm">
+    <div className="min-h-screen flex items-center justify-center bg-gradient-to-br from-blue-50 via-background to-blue-50/50 dark:from-gray-900 dark:via-background dark:to-gray-900/50 p-4 animate-fade-in">
+      <Card className="w-full max-w-md shadow-2xl border-0 animate-scale-in bg-card/95 backdrop-blur-sm">
         <CardHeader className="text-center pb-4 space-y-4">
           <div className="flex justify-center">
             <Logo size="lg" />
@@ -232,9 +252,19 @@ const Auth = () => {
             </TabsList>
             
             <TabsContent value="signin" className="space-y-6 mt-8 animate-fade-in">
+              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
+                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
+                  <AlertCircle className="h-4 w-4" />
+                  <span className="text-sm font-medium">Email Verification Required</span>
+                </div>
+                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
+                  After signing up, please check your email and click the confirmation link before signing in.
+                </p>
+              </div>
+              
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="signin-email" className="text-sm font-medium">
+                  <Label htmlFor="signin-email" className="text-sm font-medium text-foreground">
                     Email Address
                   </Label>
                   <div className="relative group">
@@ -254,7 +284,7 @@ const Auth = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signin-password" className="text-sm font-medium">
+                  <Label htmlFor="signin-password" className="text-sm font-medium text-foreground">
                     Password
                   </Label>
                   <div className="relative group">
@@ -298,9 +328,19 @@ const Auth = () => {
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-6 mt-8 animate-fade-in">
+              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
+                <div className="flex items-center space-x-2 text-green-700 dark:text-green-300">
+                  <CheckCircle className="h-4 w-4" />
+                  <span className="text-sm font-medium">Email Confirmation</span>
+                </div>
+                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
+                  After signup, we'll send you a confirmation email. Please verify before signing in.
+                </p>
+              </div>
+              
               <form onSubmit={handleSignUp} className="space-y-5">
                 <div className="space-y-2">
-                  <Label htmlFor="signup-name" className="text-sm font-medium">
+                  <Label htmlFor="signup-name" className="text-sm font-medium text-foreground">
                     Full Name
                   </Label>
                   <div className="relative group">
@@ -320,7 +360,7 @@ const Auth = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-email" className="text-sm font-medium">
+                  <Label htmlFor="signup-email" className="text-sm font-medium text-foreground">
                     Email Address
                   </Label>
                   <div className="relative group">
@@ -340,7 +380,7 @@ const Auth = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-password" className="text-sm font-medium">
+                  <Label htmlFor="signup-password" className="text-sm font-medium text-foreground">
                     Password
                   </Label>
                   <div className="relative group">
@@ -368,7 +408,7 @@ const Auth = () => {
                 </div>
                 
                 <div className="space-y-2">
-                  <Label htmlFor="signup-confirm-password" className="text-sm font-medium">
+                  <Label htmlFor="signup-confirm-password" className="text-sm font-medium text-foreground">
                     Confirm Password
                   </Label>
                   <div className="relative group">

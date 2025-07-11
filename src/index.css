@@ -7,19 +7,19 @@
 
 @layer base {
   :root {
-    --background: 210 40% 98%;
-    --foreground: 215 25% 27%;
+    --background: 0 0% 100%;
+    --foreground: 222.2 84% 4.9%;
 
     --card: 0 0% 100%;
-    --card-foreground: 215 25% 27%;
+    --card-foreground: 222.2 84% 4.9%;
 
     --popover: 0 0% 100%;
-    --popover-foreground: 215 25% 27%;
+    --popover-foreground: 222.2 84% 4.9%;
 
     --primary: 210 100% 50%;
     --primary-foreground: 210 40% 98%;
 
-    --secondary: 217 71% 20%;
+    --secondary: 217 32.6% 17.5%;
     --secondary-foreground: 210 40% 98%;
 
     --muted: 210 40% 96.1%;
@@ -104,6 +104,10 @@
   .text-gray-800 {
     @apply text-foreground;
   }
+
+  .text-gray-900 {
+    @apply text-foreground;
+  }
 }
 
 @layer components {
@@ -112,19 +116,19 @@
   }
 
   .btn-primary {
-    @apply bg-trustlens-blue text-white font-medium py-2 px-4 rounded-2xl hover:bg-blue-600 transition-colors duration-300;
+    @apply bg-primary text-primary-foreground font-medium py-2 px-4 rounded-2xl hover:bg-primary/90 transition-colors duration-300;
   }
 
   .btn-secondary {
-    @apply bg-trustlens-charcoal text-white font-medium py-2 px-4 rounded-2xl hover:bg-opacity-90 transition-colors duration-300;
+    @apply bg-secondary text-secondary-foreground font-medium py-2 px-4 rounded-2xl hover:bg-secondary/90 transition-colors duration-300;
   }
 
   .btn-success {
-    @apply bg-trustlens-green text-white font-medium py-2 px-4 rounded-2xl hover:bg-green-600 transition-colors duration-300;
+    @apply bg-accent text-accent-foreground font-medium py-2 px-4 rounded-2xl hover:bg-accent/90 transition-colors duration-300;
   }
 
   .card {
-    @apply bg-card dark:bg-card rounded-2xl shadow-soft p-6 transition-all duration-300;
+    @apply bg-card text-card-foreground rounded-2xl shadow-soft p-6 transition-all duration-300;
   }
 
   .card-hover {
@@ -132,6 +136,6 @@
   }
 
   .input-field {
-    @apply w-full px-4 py-3 rounded-2xl border border-border focus:border-primary focus:ring focus:ring-ring/20 transition-all duration-300;
+    @apply w-full px-4 py-3 rounded-2xl border border-border bg-background text-foreground focus:border-primary focus:ring focus:ring-ring/20 transition-all duration-300;
   }
 }

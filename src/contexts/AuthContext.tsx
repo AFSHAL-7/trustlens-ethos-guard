@@ -43,6 +43,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         // Handle specific auth events
         if (event === 'SIGNED_IN') {
           console.log('User signed in successfully');
+          toast.success('Welcome back!');
         } else if (event === 'SIGNED_OUT') {
           console.log('User signed out');
           setUser(null);

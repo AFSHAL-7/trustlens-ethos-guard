@@ -27,11 +27,15 @@ export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABL
 
 // Enhanced error handling and logging
 supabase.auth.onAuthStateChange((event, session) => {
+  console.log(`🔐 Auth Event: ${event}`, session?.user?.email || 'no user');
+  
   if (event === 'SIGNED_IN') {
     console.log('✅ User authenticated successfully');
   } else if (event === 'SIGNED_OUT') {
     console.log('👋 User signed out');
   } else if (event === 'TOKEN_REFRESHED') {
     console.log('🔄 Auth token refreshed');
+  } else if (event === 'USER_UPDATED') {
+    console.log('👤 User profile updated');
   }
 });

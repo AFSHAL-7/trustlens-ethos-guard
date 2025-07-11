@@ -18,7 +18,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
   const navigate = useNavigate();
 
   return (
-    <header className="bg-white dark:bg-gray-900 shadow-sm z-10 border-b dark:border-gray-700">
+    <header className="bg-background dark:bg-background shadow-sm z-10 border-b border-border">
       <div className="container mx-auto px-4">
         <div className="flex items-center justify-between h-16">
           <div className="flex items-center gap-4">
@@ -28,7 +28,7 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <div className="flex-shrink-0">
               <NavLink to="/" className="flex items-center">
                 <Logo size="sm" className="mr-2" />
-                <span className="ml-2 text-xl font-poppins font-semibold text-trustlens-charcoal dark:text-white">
+                <span className="ml-2 text-xl font-poppins font-semibold text-foreground">
                   TrustLens
                 </span>
               </NavLink>
@@ -39,8 +39,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <NavLink to="/" 
               className={({ isActive }) => 
                 isActive 
-                  ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
+                  ? "px-3 py-2 text-primary font-medium" 
+                  : "px-3 py-2 text-muted-foreground hover:text-primary transition-colors duration-300"
               }
             >
               Home
@@ -48,8 +48,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <NavLink to="/analyzer" 
               className={({ isActive }) => 
                 isActive 
-                  ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
+                  ? "px-3 py-2 text-primary font-medium" 
+                  : "px-3 py-2 text-muted-foreground hover:text-primary transition-colors duration-300"
               }
             >
               Consent Analyzer
@@ -57,8 +57,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <NavLink to="/dashboard" 
               className={({ isActive }) => 
                 isActive 
-                  ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
+                  ? "px-3 py-2 text-primary font-medium" 
+                  : "px-3 py-2 text-muted-foreground hover:text-primary transition-colors duration-300"
               }
             >
               Dashboard
@@ -66,8 +66,8 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <NavLink to="/admin" 
               className={({ isActive }) => 
                 isActive 
-                  ? "px-3 py-2 text-trustlens-blue font-medium" 
-                  : "px-3 py-2 text-gray-600 dark:text-gray-300 hover:text-trustlens-blue transition-colors duration-300"
+                  ? "px-3 py-2 text-primary font-medium" 
+                  : "px-3 py-2 text-muted-foreground hover:text-primary transition-colors duration-300"
               }
             >
               Admin
@@ -76,12 +76,12 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
           
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button variant="ghost" size="icon" className="text-gray-600 dark:text-gray-300">
+            <Button variant="ghost" size="icon" className="text-muted-foreground hover:text-foreground">
               <Settings className="h-5 w-5" />
             </Button>
             
             {loading ? (
-              <div className="h-10 w-10 bg-gray-200 rounded-full animate-pulse"></div>
+              <div className="h-10 w-10 bg-muted rounded-full animate-pulse"></div>
             ) : user ? (
               <UserProfileDropdown />
             ) : (

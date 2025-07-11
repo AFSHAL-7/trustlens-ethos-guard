@@ -35,7 +35,7 @@ const ThemeToggle: React.FC = () => {
       variant="ghost"
       size="icon"
       onClick={toggleTheme}
-      className="text-gray-600 hover:text-gray-900 dark:text-gray-300 dark:hover:text-gray-100"
+      className="text-muted-foreground hover:text-foreground"
       title={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
     >
       {isDark ? <Sun className="h-5 w-5" /> : <Moon className="h-5 w-5" />}
