@@ -15,6 +15,7 @@ import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
 import RiskItemsList from '@/components/risk-report/RiskItemsList';
 import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
 import OriginalDocument from '@/components/risk-report/OriginalDocument';
+import ExportButton from '@/components/ExportButton';
 
 export interface RiskItem {
   clause: string;
@@ -184,10 +185,7 @@ const RiskReport: React.FC = () => {
               <h1 className="text-4xl font-bold mb-3 text-foreground">Risk Analysis Report</h1>
               <p className="text-muted-foreground text-lg">Comprehensive analysis of consent document risks and recommendations</p>
             </div>
-            <Button variant="outline" size="sm" className="hover:scale-105 transition-transform">
-              <Download className="mr-2 h-4 w-4" />
-              Export Report
-            </Button>
+            <ExportButton reportData={mockData} />
           </div>
         </div>
 
