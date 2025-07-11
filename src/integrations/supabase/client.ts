@@ -11,8 +11,27 @@ const SUPABASE_PUBLISHABLE_KEY = "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiO
 
 export const supabase = createClient<Database>(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {
   auth: {
-    storage: localStorage,
+    storage: typeof window !== 'undefined' ? window.localStorage : undefined,
+    storageKey: 'trustlens-auth',
     persistSession: true,
     autoRefreshToken: true,
+    detectSessionInUrl: true,
+    flowType: 'pkce'
+  },
+  global: {
+    headers: {
+      'X-Client-Info': 'trustlens-web@1.0.0'
+    }
+  }
+});
+
+// Enhanced error handling and logging
+supabase.auth.onAuthStateChange((event, session) => {
+  if (event === 'SIGNED_IN') {
+    console.log('✅ User authenticated successfully');
+  } else if (event === 'SIGNED_OUT') {
+    console.log('👋 User signed out');
+  } else if (event === 'TOKEN_REFRESHED') {
+    console.log('🔄 Auth token refreshed');
   }
 });
