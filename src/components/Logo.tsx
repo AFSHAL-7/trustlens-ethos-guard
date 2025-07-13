@@ -18,12 +18,13 @@ const Logo: React.FC<LogoProps> = ({
 
   return (
     <div className={`relative flex items-center justify-center ${className}`}>
-      <img 
-        src="/lovable-uploads/d38a1a89-1273-40ff-85f8-ea44bf7a7b80.png" 
-        alt="TrustLens Logo" 
-        className={`${sizeClasses[size]} object-contain`}
-        style={{ maxWidth: '100%' }}
-      />
+      <span className={`font-bold text-primary ${
+        size === 'sm' ? 'text-lg' : 
+        size === 'md' ? 'text-2xl' : 
+        'text-4xl'
+      }`}>
+        Open Lens
+      </span>
     </div>
   );
 };

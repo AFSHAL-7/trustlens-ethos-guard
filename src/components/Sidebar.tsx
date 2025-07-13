@@ -1,48 +1,18 @@
 
 import React from 'react';
 import { NavLink } from 'react-router-dom';
-import { Home, Search, Calendar, Info, Settings } from 'lucide-react';
-import { useAuth } from '@/contexts/AuthContext';
-import { useQuery } from '@tanstack/react-query';
-import { supabase } from '@/integrations/supabase/client';
+import { Home, Search, Calendar, Info } from 'lucide-react';
 
 interface SidebarProps {
   isOpen: boolean;
 }
 
 const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
-  const { user } = useAuth();
-  
-  // Check if user has admin role
-  const { data: userRoles } = useQuery({
-    queryKey: ['userRoles', user?.id],
-    queryFn: async () => {
-      if (!user?.id) return [];
-      
-      const { data, error } = await supabase
-        .from('user_roles')
-        .select('role')
-        .eq('user_id', user.id);
-      
-      if (error) {
-        console.error('Error fetching user roles:', error);
-        return [];
-      }
-      
-      return data || [];
-    },
-    enabled: !!user?.id,
-  });
-
-  const isAdmin = userRoles?.some(role => role.role === 'admin') || false;
-
   const menuItems = [
     { name: 'Home', icon: <Home className="h-5 w-5" />, path: '/' },
     { name: 'Consent Analyzer', icon: <Search className="h-5 w-5" />, path: '/analyzer' },
     { name: 'Risk Report', icon: <Info className="h-5 w-5" />, path: '/report' },
     { name: 'Dashboard', icon: <Calendar className="h-5 w-5" />, path: '/dashboard' },
-    // Only show Admin Panel for admin users
-    ...(isAdmin ? [{ name: 'Admin Panel', icon: <Settings className="h-5 w-5" />, path: '/admin' }] : []),
   ];
 
   return (
@@ -88,7 +58,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
         
         <div className="px-4 mt-6">
           <div className={`text-xs text-sidebar-foreground/70 ${isOpen ? 'opacity-100' : 'opacity-0'} transition-opacity duration-300`}>
-            TrustLens v1.0
+            Open Lens v1.0
           </div>
         </div>
       </div>
