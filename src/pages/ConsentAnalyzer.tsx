@@ -173,31 +173,6 @@ const ConsentAnalyzer: React.FC = () => {
         </Card>
       </div>
       
-      <div className="mt-8">
-        <Card className="bg-gradient-to-r from-blue-50 to-blue-100 border-none">
-          <CardContent className="pt-6">
-            <div className="flex flex-col md:flex-row items-start md:items-center justify-between">
-              <div className="mb-4 md:mb-0">
-                <h3 className="text-lg font-semibold mb-1">Want to see a demo?</h3>
-                <p className="text-sm text-gray-600">
-                  Try our sample terms and conditions to see how the analysis works
-                </p>
-              </div>
-              <Button 
-                variant="outline" 
-                className="border-trustlens-blue text-trustlens-blue hover:bg-blue-50"
-                onClick={() => {
-                  const sampleTerms = `PRIVACY POLICY AND TERMS OF SERVICE\n\nEffective Date: January 1, 2025\n\n1. DATA COLLECTION\n\nWe collect personal information including but not limited to your name, email address, phone number, location data, device information, browsing history, and in some cases, payment information. We may also collect biometric data for identity verification purposes.\n\n2. DATA USAGE\n\nWe use your personal information to provide our services, improve user experience, send marketing communications, and develop new features. We may analyze your usage patterns to create personalized recommendations and advertisements.\n\n3. DATA SHARING\n\nWe may share your information with:\n- Third-party service providers who perform services on our behalf\n- Advertising partners to deliver relevant advertisements\n- Analytics providers to help us understand user behavior\n- Affiliates and business partners for joint marketing efforts\n- Legal authorities when required by law\n\n4. DATA RETENTION\n\nWe retain your personal information indefinitely unless you request deletion. Even after deletion request, we may retain certain information for legal compliance, fraud prevention, or other legitimate business purposes.\n\n5. CONSENT\n\nBy using our services, you automatically consent to our data collection, processing, and sharing practices as outlined in this policy. You also consent to receive marketing communications from us and our partners.`;
-                  setConsentText(sampleTerms);
-                  toast.success('Sample terms loaded');
-                }}
-              >
-                Load Sample
-              </Button>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
     </div>
   );
 };

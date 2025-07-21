@@ -8,7 +8,7 @@ const Footer: React.FC = () => {
         <div className="flex flex-col md:flex-row justify-between items-center">
           <div className="text-center md:text-left mb-2 md:mb-0">
             <p className="text-sm text-gray-600">
-              Built with ❤️ by TrustLens Team at HackFest 2025
+              © 2025 Afshal from XOANON. All rights reserved.
             </p>
           </div>
           <div className="flex space-x-6">

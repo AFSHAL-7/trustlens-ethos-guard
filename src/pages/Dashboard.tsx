@@ -2,8 +2,10 @@ import React, { useState, useEffect } from 'react';
 import { useLocation } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, AlertTriangle, XCircle, Search } from 'lucide-react';
+import { Check, AlertTriangle, XCircle, Search, TrendingUp, BarChart3, Target } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
+import { useAuth } from '@/contexts/AuthContext';
+import { useUserProfile } from '@/hooks/useUserProfile';
 
 interface ConsentRecord {
   id: string;
@@ -15,6 +17,8 @@ interface ConsentRecord {
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
+  const { user } = useAuth();
+  const { profile, stats, loading, error } = useUserProfile();
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
   
   // Mock data for the chart
@@ -155,7 +159,78 @@ const Dashboard: React.FC = () => {
     <div className="page-transition">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
-        <p className="text-gray-600">View and manage your consent decisions</p>
+        <p className="text-gray-600">Welcome back, {profile?.full_name || user?.email || 'User'}!</p>
+      </div>
+      
+      {/* User Stats Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center">
+              <div className="bg-blue-100 p-2 rounded-full mr-2">
+                <BarChart3 className="h-5 w-5 text-blue-600" />
+              </div>
+              Total Analyses
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {loading ? '...' : stats?.total_analyses || 0}
+            </div>
+            <p className="text-sm text-gray-500">Documents analyzed</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center">
+              <div className="bg-red-100 p-2 rounded-full mr-2">
+                <AlertTriangle className="h-5 w-5 text-red-600" />
+              </div>
+              High Risk
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {loading ? '...' : stats?.high_risk_analyses || 0}
+            </div>
+            <p className="text-sm text-gray-500">High risk documents</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center">
+              <div className="bg-green-100 p-2 rounded-full mr-2">
+                <Target className="h-5 w-5 text-green-600" />
+              </div>
+              Avg Risk Score
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {loading ? '...' : stats?.average_risk_score || 0}%
+            </div>
+            <p className="text-sm text-gray-500">Average risk level</p>
+          </CardContent>
+        </Card>
+        
+        <Card>
+          <CardHeader className="pb-2">
+            <CardTitle className="text-xl flex items-center">
+              <div className="bg-purple-100 p-2 rounded-full mr-2">
+                <TrendingUp className="h-5 w-5 text-purple-600" />
+              </div>
+              Decisions
+            </CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="text-3xl font-bold">
+              {loading ? '...' : stats?.consent_decisions_count || 0}
+            </div>
+            <p className="text-sm text-gray-500">Consent decisions made</p>
+          </CardContent>
+        </Card>
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
