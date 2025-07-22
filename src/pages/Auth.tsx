@@ -7,7 +7,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Label } from '@/components/ui/label';
 import { supabase } from '@/integrations/supabase/client';
 import { toast } from 'sonner';
-import { Eye, EyeOff, Mail, Lock, User, Loader2, Shield, CheckCircle, AlertCircle, RefreshCw } from 'lucide-react';
+import { Eye, EyeOff, Mail, Lock, User, Loader2, Shield } from 'lucide-react';
 import Logo from '@/components/Logo';
 import { useAuth } from '@/contexts/AuthContext';
 
@@ -17,8 +17,6 @@ const Auth = () => {
   const [loading, setLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   const [activeTab, setActiveTab] = useState('signin');
-  const [emailSent, setEmailSent] = useState(false);
-  const [resendLoading, setResendLoading] = useState(false);
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -63,41 +61,6 @@ const Auth = () => {
     return true;
   };
 
-  const handleResendConfirmation = async () => {
-    if (!formData.email) {
-      toast.error('Please enter your email address first');
-      return;
-    }
-
-    setResendLoading(true);
-    console.log('Resending confirmation email to:', formData.email);
-
-    try {
-      const { error } = await supabase.auth.resend({
-        type: 'signup',
-        email: formData.email.trim().toLowerCase(),
-        options: {
-          emailRedirectTo: `${window.location.origin}/`
-        }
-      });
-
-      if (error) {
-        console.error('Resend error:', error);
-        toast.error(error.message || 'Failed to resend confirmation email');
-        return;
-      }
-
-      toast.success('Confirmation email sent! Check your inbox and spam folder.', {
-        duration: 5000
-      });
-    } catch (error: any) {
-      console.error('Unexpected resend error:', error);
-      toast.error('Failed to resend confirmation email');
-    } finally {
-      setResendLoading(false);
-    }
-  };
-
   const handleSignUp = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!validateForm()) return;
@@ -106,14 +69,10 @@ const Auth = () => {
     console.log('Starting signup process for:', formData.email);
 
     try {
-      const redirectUrl = `${window.location.origin}/`;
-      console.log('Using redirect URL:', redirectUrl);
-      
       const { data, error } = await supabase.auth.signUp({
         email: formData.email.trim().toLowerCase(),
         password: formData.password,
         options: {
-          emailRedirectTo: redirectUrl,
           data: {
             full_name: formData.fullName.trim()
           }
@@ -135,25 +94,8 @@ const Auth = () => {
       }
 
       console.log('Signup response:', data);
-
-      if (data.user && !data.session) {
-        setEmailSent(true);
-        toast.success('Account created! Please check your email to verify your account.', {
-          duration: 8000,
-          description: 'Check your inbox and spam folder for the confirmation email from Supabase'
-        });
-        
-        // Show helpful message
-        toast.info('Email not received? Check your spam folder or click "Resend Email" below.', {
-          duration: 6000
-        });
-        
-        setActiveTab('signin');
-        setFormData(prev => ({ ...prev, password: '', confirmPassword: '', fullName: '' }));
-      } else if (data.session) {
-        toast.success('Account created and logged in successfully!');
-        navigate('/', { replace: true });
-      }
+      toast.success('Account created and logged in successfully!');
+      navigate('/', { replace: true });
 
     } catch (error: any) {
       console.error('Unexpected signup error:', error);
@@ -180,22 +122,7 @@ const Auth = () => {
         console.error('Sign in error:', error);
         
         if (error.message.includes('Invalid login credentials')) {
-          toast.error('Invalid email or password, or email not verified yet.', {
-            duration: 6000,
-            description: 'If you just signed up, please verify your email first',
-            action: {
-              label: 'Resend Email',
-              onClick: handleResendConfirmation
-            }
-          });
-        } else if (error.message.includes('Email not confirmed')) {
-          toast.error('Please verify your email before signing in.', {
-            duration: 6000,
-            action: {
-              label: 'Resend Email',
-              onClick: handleResendConfirmation
-            }
-          });
+          toast.error('Invalid email or password. Please check your credentials.');
         } else if (error.message.includes('Too many requests')) {
           toast.error('Too many login attempts. Please wait a moment and try again.');
         } else {
@@ -231,7 +158,6 @@ const Auth = () => {
       confirmPassword: ''
     });
     setShowPassword(false);
-    setEmailSent(false);
   };
 
   const handleTabChange = (tab: string) => {
@@ -260,7 +186,7 @@ const Auth = () => {
           </div>
           <div className="space-y-2">
             <CardTitle className="text-3xl font-bold text-foreground">
-              Welcome to TrustLens
+              Welcome to Open Lens
             </CardTitle>
             <p className="text-muted-foreground text-base">
               AI-powered consent analysis platform
@@ -290,49 +216,6 @@ const Auth = () => {
             </TabsList>
             
             <TabsContent value="signin" className="space-y-6 mt-8 animate-fade-in">
-              <div className="bg-blue-50 dark:bg-blue-950/20 border border-blue-200 dark:border-blue-800 rounded-lg p-4 mb-4">
-                <div className="flex items-center space-x-2 text-blue-700 dark:text-blue-300">
-                  <AlertCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Email Verification Required</span>
-                </div>
-                <p className="text-xs text-blue-600 dark:text-blue-400 mt-1">
-                  After signing up, please check your email and click the confirmation link before signing in.
-                </p>
-              </div>
-
-              {/* Email troubleshooting section */}
-              <div className="bg-amber-50 dark:bg-amber-950/20 border border-amber-200 dark:border-amber-800 rounded-lg p-4 mb-4">
-                <div className="flex items-center space-x-2 text-amber-700 dark:text-amber-300 mb-2">
-                  <Mail className="h-4 w-4" />
-                  <span className="text-sm font-medium">Email Not Received?</span>
-                </div>
-                <div className="text-xs text-amber-600 dark:text-amber-400 space-y-1">
-                  <p>• Check your spam/junk folder</p>
-                  <p>• Make sure you entered the correct email</p>
-                  <p>• Try the resend button below</p>
-                </div>
-                <Button
-                  type="button"
-                  variant="outline"
-                  size="sm"
-                  onClick={handleResendConfirmation}
-                  disabled={resendLoading || !formData.email}
-                  className="mt-2 w-full"
-                >
-                  {resendLoading ? (
-                    <>
-                      <RefreshCw className="mr-2 h-3 w-3 animate-spin" />
-                      Sending...
-                    </>
-                  ) : (
-                    <>
-                      <Mail className="mr-2 h-3 w-3" />
-                      Resend Confirmation Email
-                    </>
-                  )}
-                </Button>
-              </div>
-              
               <form onSubmit={handleSignIn} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="signin-email" className="text-sm font-medium text-foreground">
@@ -399,16 +282,6 @@ const Auth = () => {
             </TabsContent>
 
             <TabsContent value="signup" className="space-y-6 mt-8 animate-fade-in">
-              <div className="bg-green-50 dark:bg-green-950/20 border border-green-200 dark:border-green-800 rounded-lg p-4 mb-4">
-                <div className="flex items-center space-x-2 text-green-700 dark:text-green-300">
-                  <CheckCircle className="h-4 w-4" />
-                  <span className="text-sm font-medium">Email Confirmation Required</span>
-                </div>
-                <p className="text-xs text-green-600 dark:text-green-400 mt-1">
-                  After signup, we'll send a confirmation email. Please check your inbox and spam folder.
-                </p>
-              </div>
-              
               <form onSubmit={handleSignUp} className="space-y-5">
                 <div className="space-y-2">
                   <Label htmlFor="signup-name" className="text-sm font-medium text-foreground">
