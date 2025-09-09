@@ -28,9 +28,6 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             <div className="flex-shrink-0">
               <NavLink to="/" className="flex items-center">
                 <Logo size="sm" className="mr-2" />
-                <span className="ml-2 text-xl font-poppins font-semibold text-foreground">
-                  TrustLens
-                </span>
               </NavLink>
             </div>
           </div>
