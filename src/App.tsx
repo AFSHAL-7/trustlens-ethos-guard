@@ -10,7 +10,7 @@ import Home from "./pages/Home";
 import ConsentAnalyzer from "./pages/ConsentAnalyzer";
 import RiskReport from "./pages/RiskReport";
 import Dashboard from "./pages/Dashboard";
-import Admin from "./pages/Admin";
+import Settings from "./pages/Settings";
 import Auth from "./pages/Auth";
 import NotFound from "./pages/NotFound";
 
@@ -32,7 +32,7 @@ const App = () => (
                   <Route path="/analyzer" element={<ConsentAnalyzer />} />
                   <Route path="/report" element={<RiskReport />} />
                   <Route path="/dashboard" element={<Dashboard />} />
-                  <Route path="/admin" element={<Admin />} />
+                  <Route path="/settings" element={<Settings />} />
                   <Route path="*" element={<NotFound />} />
                 </Routes>
               </Layout>
