@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import RiskScoreCard from '@/components/risk-report/RiskScoreCard';
 import DocumentAnalysisCard from '@/components/risk-report/DocumentAnalysisCard';
 import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
+import IndividualTermsCard from '@/components/risk-report/IndividualTermsCard';
 import RiskItemsList from '@/components/risk-report/RiskItemsList';
 import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
 import OriginalDocument from '@/components/risk-report/OriginalDocument';
@@ -30,11 +31,20 @@ export interface SummarySection {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
+export interface Term {
+  id: string;
+  title: string;
+  description: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  required: boolean;
+}
+
 const RiskReport: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [consentDecision, setConsentDecision] = useState<'allow' | 'partial' | 'deny' | null>(null);
+  const [individualTermDecisions, setIndividualTermDecisions] = useState<{ termId: string; accepted: boolean }[]>([]);
   const [saving, setSaving] = useState(false);
 
   // Generate analysis based on the input text
@@ -79,8 +89,9 @@ const RiskReport: React.FC = () => {
 
     const riskItems: RiskItem[] = [];
     const summaryData: SummarySection[] = [];
+    const extractedTerms: Term[] = [];
 
-    // Generate risk items based on analysis
+    // Generate risk items and terms based on analysis
     if (keywordAnalysis.privacy > 3) {
       riskItems.push({
         clause: "Data Collection and Usage",
@@ -93,6 +104,14 @@ const RiskReport: React.FC = () => {
         title: "Data Collection Practices",
         content: `The document contains ${keywordAnalysis.privacy} references to personal data collection. This suggests significant data processing activities that users should be aware of.`,
         riskLevel: keywordAnalysis.privacy > 8 ? "high" : keywordAnalysis.privacy > 5 ? "medium" : "low"
+      });
+
+      extractedTerms.push({
+        id: "data-collection",
+        title: "Personal Data Collection",
+        description: "Allow collection of personal information for service provision",
+        riskLevel: keywordAnalysis.privacy > 8 ? "high" : keywordAnalysis.privacy > 5 ? "medium" : "low",
+        required: true
       });
     }
 
@@ -109,6 +128,14 @@ const RiskReport: React.FC = () => {
         content: `Found ${keywordAnalysis.sharing} instances of third-party data sharing provisions. This indicates your data may be shared beyond the primary service provider.`,
         riskLevel: keywordAnalysis.sharing > 6 ? "high" : keywordAnalysis.sharing > 3 ? "medium" : "low"
       });
+
+      extractedTerms.push({
+        id: "data-sharing",
+        title: "Third-Party Data Sharing",
+        description: "Allow sharing of your data with partner companies and service providers",
+        riskLevel: keywordAnalysis.sharing > 6 ? "high" : keywordAnalysis.sharing > 3 ? "medium" : "low",
+        required: false
+      });
     }
 
     if (keywordAnalysis.tracking > 2) {
@@ -117,6 +144,14 @@ const RiskReport: React.FC = () => {
         risk: "Implementation of tracking technologies and user monitoring",
         impact: "Behavioral profiling and targeted advertising based on usage patterns",
         recommendation: "Seek options to disable or limit tracking mechanisms"
+      });
+
+      extractedTerms.push({
+        id: "tracking-analytics",
+        title: "Tracking & Analytics",
+        description: "Allow cookies and tracking technologies for analytics and advertising",
+        riskLevel: keywordAnalysis.tracking > 5 ? "high" : "medium",
+        required: false
       });
     }
 
@@ -132,6 +167,26 @@ const RiskReport: React.FC = () => {
         title: "User Rights and Control",
         content: `The document provides limited information about user rights (${keywordAnalysis.rights} references). This may indicate restricted control over your personal data.`,
         riskLevel: keywordAnalysis.rights === 0 ? "high" : "medium"
+      });
+    }
+
+    // Always add communication terms
+    extractedTerms.push({
+      id: "marketing-communications",
+      title: "Marketing Communications",
+      description: "Receive promotional emails, newsletters, and marketing content",
+      riskLevel: "low",
+      required: false
+    });
+
+    // Ensure we have at least basic terms if none were detected
+    if (extractedTerms.length === 0) {
+      extractedTerms.push({
+        id: "basic-service",
+        title: "Basic Service Agreement",
+        description: "Agree to basic terms of service for platform usage",
+        riskLevel: "low",
+        required: true
       });
     }
 
@@ -158,13 +213,19 @@ const RiskReport: React.FC = () => {
       riskScore: Math.round(baseScore),
       riskItems,
       summaryData,
+      extractedTerms,
       originalText: consentText || "No document text provided"
     };
   };
 
   const analysisData = generateAnalysis(location.state?.consentText || "");
 
-  const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny') => {
+  const handleIndividualTermsDecision = async (decisions: { termId: string; accepted: boolean }[], globalAction: 'allow' | 'partial' | 'deny') => {
+    setIndividualTermDecisions(decisions);
+    await handleSaveDecision(globalAction, decisions);
+  };
+
+  const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny', termDecisions?: { termId: string; accepted: boolean }[]) => {
     if (!user) {
       toast.error('Please sign in to save your decision');
       return;
@@ -181,7 +242,14 @@ const RiskReport: React.FC = () => {
         risk_score: analysisData.riskScore,
         consent_decision: decision,
         risk_items: JSON.stringify(analysisData.riskItems),
-        summary_sections: JSON.stringify(analysisData.summaryData),
+        summary_sections: JSON.stringify([
+          ...analysisData.summaryData,
+          ...(termDecisions ? [{
+            title: "Individual Terms Decisions",
+            content: `${termDecisions.filter(t => t.accepted).length} out of ${termDecisions.length} terms were accepted individually.`,
+            riskLevel: "low" as const
+          }] : [])
+        ]),
         original_text: analysisData.originalText
       };
 
@@ -327,6 +395,12 @@ const RiskReport: React.FC = () => {
 
           {/* Sidebar */}
           <div className="space-y-6">
+            <IndividualTermsCard 
+              terms={analysisData.extractedTerms}
+              onDecisionSubmit={handleIndividualTermsDecision}
+              disabled={consentDecision !== null}
+            />
+            
             <ConsentDecisionCard 
               onConsent={handleSaveDecision}
               consentAction={consentDecision}
