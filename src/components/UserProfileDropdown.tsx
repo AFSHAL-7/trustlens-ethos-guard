@@ -190,9 +190,9 @@ const UserProfileDropdown = () => {
           </>
         )}
         
-        <DropdownMenuItem className="text-foreground focus:text-foreground">
+        <DropdownMenuItem disabled className="text-muted-foreground">
           <Settings className="mr-2 h-4 w-4" />
-          <span>Settings</span>
+          <span>Settings (Coming Soon)</span>
         </DropdownMenuItem>
         
         <DropdownMenuItem 
