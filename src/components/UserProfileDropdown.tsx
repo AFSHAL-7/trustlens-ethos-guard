@@ -13,7 +13,6 @@ import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar';
 import { Badge } from '@/components/ui/badge';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
-import { useNavigate } from 'react-router-dom';
 import { 
   User, 
   LogOut, 
@@ -30,7 +29,6 @@ import { toast } from 'sonner';
 const UserProfileDropdown = () => {
   const { user, signOut } = useAuth();
   const { profile, stats, loading } = useUserProfile();
-  const navigate = useNavigate();
 
   const handleSignOut = async () => {
     try {
@@ -192,10 +190,7 @@ const UserProfileDropdown = () => {
           </>
         )}
         
-        <DropdownMenuItem 
-          onClick={() => navigate('/settings')}
-          className="text-foreground focus:text-foreground"
-        >
+        <DropdownMenuItem className="text-foreground focus:text-foreground">
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>
