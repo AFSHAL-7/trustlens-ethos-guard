@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
-import { Check, AlertTriangle, XCircle, Search, TrendingUp, BarChart3, Target } from 'lucide-react';
+import { Check, AlertTriangle, XCircle, Search, TrendingUp, BarChart3, Target, ArrowLeft } from 'lucide-react';
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { Button } from '@/components/ui/button';
 
 interface ConsentRecord {
   id: string;
@@ -17,6 +18,7 @@ interface ConsentRecord {
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, stats, loading, error } = useUserProfile();
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
@@ -158,6 +160,17 @@ const Dashboard: React.FC = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
+        <div className="flex items-center mb-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(-1)}
+            className="mr-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold mb-2">Dashboard</h1>
         <p className="text-gray-600">Welcome back, {profile?.full_name || user?.email || 'User'}!</p>
       </div>
