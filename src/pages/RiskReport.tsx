@@ -12,6 +12,7 @@ import { toast } from 'sonner';
 import RiskScoreCard from '@/components/risk-report/RiskScoreCard';
 import DocumentAnalysisCard from '@/components/risk-report/DocumentAnalysisCard';
 import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
+import IndividualTermsCard from '@/components/risk-report/IndividualTermsCard';
 import RiskItemsList from '@/components/risk-report/RiskItemsList';
 import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
 import OriginalDocument from '@/components/risk-report/OriginalDocument';
@@ -30,57 +31,201 @@ export interface SummarySection {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
+export interface Term {
+  id: string;
+  title: string;
+  description: string;
+  riskLevel: 'low' | 'medium' | 'high';
+  required: boolean;
+}
+
 const RiskReport: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [consentDecision, setConsentDecision] = useState<'allow' | 'partial' | 'deny' | null>(null);
+  const [individualTermDecisions, setIndividualTermDecisions] = useState<{ termId: string; accepted: boolean }[]>([]);
   const [saving, setSaving] = useState(false);
 
-  const mockData = {
-    documentTitle: "Social Media Platform Terms of Service",
-    riskScore: 72,
-    riskItems: [
-      {
+  // Generate analysis based on the input text
+  const generateAnalysis = (text: string) => {
+    const consentText = text || location.state?.consentText || "";
+    const textLength = consentText.length;
+    const keywordAnalysis = {
+      privacy: (consentText.toLowerCase().match(/privacy|personal|data|information/g) || []).length,
+      sharing: (consentText.toLowerCase().match(/share|third.?party|partner|advertis/g) || []).length,
+      tracking: (consentText.toLowerCase().match(/track|cookie|analytics|monitor/g) || []).length,
+      rights: (consentText.toLowerCase().match(/right|opt.?out|delete|control/g) || []).length,
+    };
+
+    // Calculate risk score based on content analysis
+    const baseScore = Math.min(100, Math.max(20, 
+      (keywordAnalysis.privacy * 3) + 
+      (keywordAnalysis.sharing * 4) + 
+      (keywordAnalysis.tracking * 3) + 
+      Math.max(0, 50 - (keywordAnalysis.rights * 8))
+    ));
+
+    // Determine document title from content
+    const getDocumentTitle = (text: string): string => {
+      const lines = text.split('\n').filter(line => line.trim());
+      if (lines.length > 0) {
+        const firstLine = lines[0].trim();
+        if (firstLine.length > 5 && firstLine.length < 100) {
+          return firstLine;
+        }
+      }
+      
+      if (text.toLowerCase().includes('terms of service') || text.toLowerCase().includes('terms and conditions')) {
+        return "Terms of Service Agreement";
+      } else if (text.toLowerCase().includes('privacy policy')) {
+        return "Privacy Policy Document";
+      } else if (text.toLowerCase().includes('cookie')) {
+        return "Cookie Policy";
+      } else {
+        return "Consent Agreement Document";
+      }
+    };
+
+    const riskItems: RiskItem[] = [];
+    const summaryData: SummarySection[] = [];
+    const extractedTerms: Term[] = [];
+
+    // Generate risk items and terms based on analysis
+    if (keywordAnalysis.privacy > 3) {
+      riskItems.push({
         clause: "Data Collection and Usage",
-        risk: "Extensive personal data collection including browsing habits, location data, and social connections",
-        impact: "High privacy invasion with potential for data profiling and targeted manipulation",
-        recommendation: "Request specific opt-out mechanisms for non-essential data collection"
-      },
-      {
-        clause: "Third-Party Data Sharing",
-        risk: "Broad permissions to share data with unnamed third-party partners",
-        impact: "Loss of control over personal information with unknown recipients",
-        recommendation: "Demand transparency about third-party partners and purpose of sharing"
-      },
-      {
-        clause: "Automated Decision Making",
-        risk: "AI-driven content curation and user experience personalization",
-        impact: "Potential algorithmic bias affecting content exposure and social interactions",
-        recommendation: "Seek options to disable or modify automated decision-making features"
-      }
-    ] as RiskItem[],
-    summaryData: [
-      {
+        risk: "Extensive personal data collection identified in the document",
+        impact: keywordAnalysis.privacy > 8 ? "High privacy invasion with potential for data profiling" : "Moderate privacy concerns with personal data usage",
+        recommendation: "Review specific data collection purposes and request opt-out options"
+      });
+
+      summaryData.push({
         title: "Data Collection Practices",
-        content: "The platform collects extensive personal data including location, browsing habits, device information, and social connections. This creates a comprehensive profile that extends beyond typical usage patterns.",
-        riskLevel: "high" as const
-      },
-      {
-        title: "User Rights and Control",
-        content: "Limited user control over data usage with complex opt-out procedures. Account deletion may not result in complete data removal from backup systems.",
-        riskLevel: "medium" as const
-      },
-      {
+        content: `The document contains ${keywordAnalysis.privacy} references to personal data collection. This suggests significant data processing activities that users should be aware of.`,
+        riskLevel: keywordAnalysis.privacy > 8 ? "high" : keywordAnalysis.privacy > 5 ? "medium" : "low"
+      });
+
+      extractedTerms.push({
+        id: "data-collection",
+        title: "Personal Data Collection",
+        description: "Allow collection of personal information for service provision",
+        riskLevel: keywordAnalysis.privacy > 8 ? "high" : keywordAnalysis.privacy > 5 ? "medium" : "low",
+        required: true
+      });
+    }
+
+    if (keywordAnalysis.sharing > 2) {
+      riskItems.push({
+        clause: "Third-Party Data Sharing",
+        risk: "Document allows sharing of data with external parties",
+        impact: keywordAnalysis.sharing > 6 ? "Loss of control over personal information with unknown recipients" : "Limited data sharing with potential privacy implications",
+        recommendation: "Demand transparency about third-party partners and sharing purposes"
+      });
+
+      summaryData.push({
         title: "Third-Party Integration",
-        content: "Data sharing agreements with advertising networks and analytics providers. Users have minimal visibility into these partnerships and data usage.",
-        riskLevel: "high" as const
-      }
-    ] as SummarySection[],
-    originalText: location.state?.originalText || "Original document text would appear here..."
+        content: `Found ${keywordAnalysis.sharing} instances of third-party data sharing provisions. This indicates your data may be shared beyond the primary service provider.`,
+        riskLevel: keywordAnalysis.sharing > 6 ? "high" : keywordAnalysis.sharing > 3 ? "medium" : "low"
+      });
+
+      extractedTerms.push({
+        id: "data-sharing",
+        title: "Third-Party Data Sharing",
+        description: "Allow sharing of your data with partner companies and service providers",
+        riskLevel: keywordAnalysis.sharing > 6 ? "high" : keywordAnalysis.sharing > 3 ? "medium" : "low",
+        required: false
+      });
+    }
+
+    if (keywordAnalysis.tracking > 2) {
+      riskItems.push({
+        clause: "Tracking and Analytics",
+        risk: "Implementation of tracking technologies and user monitoring",
+        impact: "Behavioral profiling and targeted advertising based on usage patterns",
+        recommendation: "Seek options to disable or limit tracking mechanisms"
+      });
+
+      extractedTerms.push({
+        id: "tracking-analytics",
+        title: "Tracking & Analytics",
+        description: "Allow cookies and tracking technologies for analytics and advertising",
+        riskLevel: keywordAnalysis.tracking > 5 ? "high" : "medium",
+        required: false
+      });
+    }
+
+    if (keywordAnalysis.rights < 3) {
+      riskItems.push({
+        clause: "User Rights and Control",
+        risk: "Limited user control mechanisms described in the document",
+        impact: "Difficulty in managing or deleting personal information",
+        recommendation: "Request clear procedures for exercising data rights"
+      });
+
+      summaryData.push({
+        title: "User Rights and Control",
+        content: `The document provides limited information about user rights (${keywordAnalysis.rights} references). This may indicate restricted control over your personal data.`,
+        riskLevel: keywordAnalysis.rights === 0 ? "high" : "medium"
+      });
+    }
+
+    // Always add communication terms
+    extractedTerms.push({
+      id: "marketing-communications",
+      title: "Marketing Communications",
+      description: "Receive promotional emails, newsletters, and marketing content",
+      riskLevel: "low",
+      required: false
+    });
+
+    // Ensure we have at least basic terms if none were detected
+    if (extractedTerms.length === 0) {
+      extractedTerms.push({
+        id: "basic-service",
+        title: "Basic Service Agreement",
+        description: "Agree to basic terms of service for platform usage",
+        riskLevel: "low",
+        required: true
+      });
+    }
+
+    // Ensure we have at least some analysis
+    if (riskItems.length === 0) {
+      riskItems.push({
+        clause: "General Terms Analysis",
+        risk: "Standard consent document with typical data usage provisions",
+        impact: "Basic privacy considerations apply",
+        recommendation: "Review the document carefully for any concerning clauses"
+      });
+    }
+
+    if (summaryData.length === 0) {
+      summaryData.push({
+        title: "Document Analysis",
+        content: "This appears to be a standard consent document. While no major red flags were identified, users should still review the terms carefully.",
+        riskLevel: "low" as const
+      });
+    }
+
+    return {
+      documentTitle: getDocumentTitle(consentText),
+      riskScore: Math.round(baseScore),
+      riskItems,
+      summaryData,
+      extractedTerms,
+      originalText: consentText || "No document text provided"
+    };
   };
 
-  const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny') => {
+  const analysisData = generateAnalysis(location.state?.consentText || "");
+
+  const handleIndividualTermsDecision = async (decisions: { termId: string; accepted: boolean }[], globalAction: 'allow' | 'partial' | 'deny') => {
+    setIndividualTermDecisions(decisions);
+    await handleSaveDecision(globalAction, decisions);
+  };
+
+  const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny', termDecisions?: { termId: string; accepted: boolean }[]) => {
     if (!user) {
       toast.error('Please sign in to save your decision');
       return;
@@ -91,19 +236,26 @@ const RiskReport: React.FC = () => {
 
     try {
       // Save the consent analysis to database - convert arrays to JSON
-      const analysisData = {
+      const analysisDataToSave = {
         user_id: user.id,
-        document_title: mockData.documentTitle,
-        risk_score: mockData.riskScore,
+        document_title: analysisData.documentTitle,
+        risk_score: analysisData.riskScore,
         consent_decision: decision,
-        risk_items: JSON.stringify(mockData.riskItems),
-        summary_sections: JSON.stringify(mockData.summaryData),
-        original_text: mockData.originalText
+        risk_items: JSON.stringify(analysisData.riskItems),
+        summary_sections: JSON.stringify([
+          ...analysisData.summaryData,
+          ...(termDecisions ? [{
+            title: "Individual Terms Decisions",
+            content: `${termDecisions.filter(t => t.accepted).length} out of ${termDecisions.length} terms were accepted individually.`,
+            riskLevel: "low" as const
+          }] : [])
+        ]),
+        original_text: analysisData.originalText
       };
 
       const { error: insertError } = await supabase
         .from('consent_analyses')
-        .insert(analysisData);
+        .insert(analysisDataToSave);
 
       if (insertError) {
         console.error('Error saving analysis:', insertError);
@@ -111,22 +263,29 @@ const RiskReport: React.FC = () => {
         return;
       }
 
-      // Update user stats
+      // Update user stats - first get current stats or create if doesn't exist
       const { data: currentStats } = await supabase
         .from('user_stats')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
-      const newTotalAnalyses = (currentStats?.total_analyses || 0) + 1;
-      const newHighRiskAnalyses = mockData.riskScore > 70 
-        ? (currentStats?.high_risk_analyses || 0) + 1 
-        : (currentStats?.high_risk_analyses || 0);
-      const newConsentDecisions = (currentStats?.consent_decisions_count || 0) + 1;
-      
+      // Initialize stats for new users starting from 0
+      const currentTotalAnalyses = currentStats?.total_analyses || 0;
+      const currentHighRiskAnalyses = currentStats?.high_risk_analyses || 0;
       const currentAvgScore = currentStats?.average_risk_score || 0;
-      const currentTotal = currentStats?.total_analyses || 0;
-      const newAvgScore = Math.round(((currentAvgScore * currentTotal) + mockData.riskScore) / newTotalAnalyses);
+      const currentConsentDecisions = currentStats?.consent_decisions_count || 0;
+
+      const newTotalAnalyses = currentTotalAnalyses + 1;
+      const newHighRiskAnalyses = analysisData.riskScore > 70 
+        ? currentHighRiskAnalyses + 1 
+        : currentHighRiskAnalyses;
+      const newConsentDecisions = currentConsentDecisions + 1;
+      
+      // Calculate new average score properly
+      const newAvgScore = currentTotalAnalyses === 0 
+        ? analysisData.riskScore 
+        : Math.round(((currentAvgScore * currentTotalAnalyses) + analysisData.riskScore) / newTotalAnalyses);
 
       const { error: statsError } = await supabase
         .from('user_stats')
@@ -150,10 +309,10 @@ const RiskReport: React.FC = () => {
         navigate('/dashboard', {
           state: {
             newConsent: {
-              title: mockData.documentTitle,
+              title: analysisData.documentTitle,
               action: decision,
               timestamp: new Date().toISOString(),
-              riskScore: mockData.riskScore
+              riskScore: analysisData.riskScore
             }
           }
         });
@@ -185,7 +344,7 @@ const RiskReport: React.FC = () => {
               <h1 className="text-4xl font-bold mb-3 text-foreground">Risk Analysis Report</h1>
               <p className="text-muted-foreground text-lg">Comprehensive analysis of consent document risks and recommendations</p>
             </div>
-            <ExportButton reportData={mockData} />
+            <ExportButton reportData={analysisData} />
           </div>
         </div>
 
@@ -193,15 +352,15 @@ const RiskReport: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             <RiskScoreCard 
-              riskScore={mockData.riskScore}
+              riskScore={analysisData.riskScore}
             />
             
             <DocumentAnalysisCard 
-              risks={mockData.riskItems.map((item, index) => ({
+              risks={analysisData.riskItems.map((item, index) => ({
                 id: `risk-${index}`,
                 title: item.clause,
                 description: item.risk,
-                severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+                severity: analysisData.riskScore > 80 ? 'high' : analysisData.riskScore > 60 ? 'medium' : 'low',
                 category: 'Privacy',
                 specific_clause: item.clause,
                 impact: item.impact,
@@ -209,33 +368,39 @@ const RiskReport: React.FC = () => {
               }))}
             />
             
-            <RiskItemsList risks={mockData.riskItems.map((item, index) => ({
+            <RiskItemsList risks={analysisData.riskItems.map((item, index) => ({
               id: `risk-${index}`,
               title: item.clause,
               description: item.risk,
-              severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+              severity: analysisData.riskScore > 80 ? 'high' : analysisData.riskScore > 60 ? 'medium' : 'low',
               category: 'Privacy',
               specific_clause: item.clause,
               impact: item.impact,
               recommendation: item.recommendation
             }))} />
             
-            <DetailedAnalysis summary={mockData.summaryData.map(section => ({
+            <DetailedAnalysis summary={analysisData.summaryData.map(section => ({
               title: section.title,
               content: section.content,
               risk_level: section.riskLevel,
               specific_issues: [
-                "Extensive data collection beyond necessary functionality",
-                "Unclear data retention policies",
-                "Limited user control over personal information"
+                "Document analysis based on content keywords",
+                "Risk assessment derived from clause patterns", 
+                "Recommendations tailored to identified concerns"
               ]
             }))} />
             
-            <OriginalDocument consentText={mockData.originalText} />
+            <OriginalDocument consentText={analysisData.originalText} />
           </div>
 
           {/* Sidebar */}
           <div className="space-y-6">
+            <IndividualTermsCard 
+              terms={analysisData.extractedTerms}
+              onDecisionSubmit={handleIndividualTermsDecision}
+              disabled={consentDecision !== null}
+            />
+            
             <ConsentDecisionCard 
               onConsent={handleSaveDecision}
               consentAction={consentDecision}
