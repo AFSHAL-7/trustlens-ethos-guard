@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Upload, FileText, Send, ArrowRight } from 'lucide-react';
+import { Upload, FileText, Send, ArrowRight, ArrowLeft } from 'lucide-react';
 
 const ConsentAnalyzer: React.FC = () => {
   const navigate = useNavigate();
@@ -62,6 +62,17 @@ const ConsentAnalyzer: React.FC = () => {
   return (
     <div className="page-transition">
       <div className="mb-6">
+        <div className="flex items-center mb-4">
+          <Button 
+            variant="ghost" 
+            size="sm" 
+            onClick={() => navigate(-1)}
+            className="mr-4"
+          >
+            <ArrowLeft className="h-4 w-4 mr-2" />
+            Back
+          </Button>
+        </div>
         <h1 className="text-3xl font-bold mb-2">Consent Analyzer</h1>
         <p className="text-gray-600">Upload or paste terms and conditions for AI-powered analysis</p>
       </div>
