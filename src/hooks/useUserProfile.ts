@@ -90,7 +90,7 @@ export const useUserProfile = () => {
           throw new Error('Failed to fetch stats');
         }
 
-        // Create stats if they don't exist - ensure new users start with 0 stats
+        // Create stats if they don't exist
         if (!statsData) {
           console.log('Creating new stats for user:', user.id);
           const { data: newStats, error: createStatsError } = await supabase
