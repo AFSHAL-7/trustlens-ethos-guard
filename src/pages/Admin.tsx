@@ -6,31 +6,77 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Switch } from '@/components/ui/switch';
 import { toast } from 'sonner';
+import { useUserSettings } from '@/hooks/useUserSettings';
+import { Copy } from 'lucide-react';
 
 const Admin: React.FC = () => {
+  const { settings, loading, updateSettings } = useUserSettings();
   const [isLoading, setIsLoading] = useState(false);
+  const [formData, setFormData] = useState({
+    company_name: '',
+    contact_email: '',
+    enable_analytics: true,
+    email_notifications: true,
+    risk_threshold: 75,
+    enhanced_privacy_analysis: true,
+    gdpr_compliance_check: true,
+    ccpa_compliance_check: false,
+    webhook_url: ''
+  });
+
+  // Update form data when settings load
+  React.useEffect(() => {
+    if (settings) {
+      setFormData({
+        company_name: settings.company_name || '',
+        contact_email: settings.contact_email || '',
+        enable_analytics: settings.enable_analytics,
+        email_notifications: settings.email_notifications,
+        risk_threshold: settings.risk_threshold,
+        enhanced_privacy_analysis: settings.enhanced_privacy_analysis,
+        gdpr_compliance_check: settings.gdpr_compliance_check,
+        ccpa_compliance_check: settings.ccpa_compliance_check,
+        webhook_url: settings.webhook_url || ''
+      });
+    }
+  }, [settings]);
   
-  const handleSaveSettings = () => {
+  const handleSaveSettings = async () => {
     setIsLoading(true);
-    // Simulate API call
-    setTimeout(() => {
-      setIsLoading(false);
-      toast.success('Settings saved successfully');
-    }, 1000);
+    const success = await updateSettings(formData);
+    setIsLoading(false);
   };
+
+  const copyApiKey = () => {
+    if (settings?.api_key) {
+      navigator.clipboard.writeText(settings.api_key);
+      toast.success('API key copied to clipboard');
+    }
+  };
+
+  if (loading) {
+    return (
+      <div className="page-transition">
+        <div className="mb-6">
+          <h1 className="text-3xl font-bold mb-2">Settings</h1>
+          <p className="text-gray-600">Loading settings...</p>
+        </div>
+      </div>
+    );
+  }
   
   return (
     <div className="page-transition">
       <div className="mb-6">
-        <h1 className="text-3xl font-bold mb-2">Admin Panel</h1>
-        <p className="text-gray-600">Configure settings and manage integrations</p>
+        <h1 className="text-3xl font-bold mb-2">Settings</h1>
+        <p className="text-gray-600">Configure your preferences and integrations</p>
       </div>
       
       <Tabs defaultValue="settings">
         <TabsList className="mb-6">
-          <TabsTrigger value="settings">Settings</TabsTrigger>
+          <TabsTrigger value="settings">General</TabsTrigger>
           <TabsTrigger value="api">API Integration</TabsTrigger>
-          <TabsTrigger value="users">User Management</TabsTrigger>
+          <TabsTrigger value="ai">AI Configuration</TabsTrigger>
         </TabsList>
         
         <TabsContent value="settings" className="animate-fade-in">
@@ -47,7 +93,8 @@ const Admin: React.FC = () => {
                   </label>
                   <Input 
                     placeholder="Your Company Name" 
-                    defaultValue="TrustLens Inc."
+                    value={formData.company_name}
+                    onChange={(e) => setFormData(prev => ({ ...prev, company_name: e.target.value }))}
                   />
                 </div>
                 
@@ -58,7 +105,8 @@ const Admin: React.FC = () => {
                   <Input 
                     type="email"
                     placeholder="contact@example.com" 
-                    defaultValue="support@trustlens.com"
+                    value={formData.contact_email}
+                    onChange={(e) => setFormData(prev => ({ ...prev, contact_email: e.target.value }))}
                   />
                 </div>
                 
@@ -67,7 +115,10 @@ const Admin: React.FC = () => {
                     <p className="font-medium">Enable Analytics</p>
                     <p className="text-sm text-gray-500">Collect anonymous usage data</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={formData.enable_analytics}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enable_analytics: checked }))}
+                  />
                 </div>
                 
                 <div className="flex items-center justify-between">
@@ -75,7 +126,10 @@ const Admin: React.FC = () => {
                     <p className="font-medium">Email Notifications</p>
                     <p className="text-sm text-gray-500">Send consent activity updates</p>
                   </div>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={formData.email_notifications}
+                    onCheckedChange={(checked) => setFormData(prev => ({ ...prev, email_notifications: checked }))}
+                  />
                 </div>
                 
                 <Button 
@@ -88,63 +142,6 @@ const Admin: React.FC = () => {
               </CardContent>
             </Card>
             
-            <Card>
-              <CardHeader>
-                <CardTitle>AI Configuration</CardTitle>
-                <CardDescription>Customize AI analysis preferences</CardDescription>
-              </CardHeader>
-              <CardContent className="space-y-6">
-                <div>
-                  <label className="block text-sm font-medium mb-2">
-                    Risk Score Threshold
-                  </label>
-                  <div className="flex items-center">
-                    <Input 
-                      type="number"
-                      min="0"
-                      max="100"
-                      defaultValue="75"
-                    />
-                    <span className="ml-2">%</span>
-                  </div>
-                  <p className="text-xs text-gray-500 mt-1">
-                    Consent documents scoring above this threshold will be flagged as high risk
-                  </p>
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">Enhanced Privacy Analysis</p>
-                    <p className="text-sm text-gray-500">More thorough privacy evaluation</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">GDPR Compliance Check</p>
-                    <p className="text-sm text-gray-500">Check terms against GDPR requirements</p>
-                  </div>
-                  <Switch defaultChecked />
-                </div>
-                
-                <div className="flex items-center justify-between">
-                  <div>
-                    <p className="font-medium">CCPA Compliance Check</p>
-                    <p className="text-sm text-gray-500">Check terms against CCPA requirements</p>
-                  </div>
-                  <Switch />
-                </div>
-                
-                <Button 
-                  onClick={handleSaveSettings}
-                  disabled={isLoading}
-                  className="w-full"
-                >
-                  {isLoading ? 'Saving...' : 'Save Settings'}
-                </Button>
-              </CardContent>
-            </Card>
           </div>
         </TabsContent>
         
@@ -162,12 +159,12 @@ const Admin: React.FC = () => {
                 <div className="flex">
                   <Input 
                     type="password"
-                    value="sk_test_TrustLens2025ApiKeyExampleValue"
+                    value={settings?.api_key || 'Loading...'}
                     className="flex-1 mr-2"
                     readOnly
                   />
-                  <Button variant="outline" onClick={() => toast.success('API key copied to clipboard')}>
-                    Copy
+                  <Button variant="outline" onClick={copyApiKey}>
+                    <Copy className="h-4 w-4" />
                   </Button>
                 </div>
                 <p className="text-xs text-gray-500 mt-1">
@@ -181,7 +178,8 @@ const Admin: React.FC = () => {
                 </label>
                 <Input 
                   placeholder="https://your-app.com/webhook/trustlens" 
-                  defaultValue="https://api.example.com/webhooks/trustlens"
+                  value={formData.webhook_url}
+                  onChange={(e) => setFormData(prev => ({ ...prev, webhook_url: e.target.value }))}
                 />
                 <p className="text-xs text-gray-500 mt-1">
                   We'll send consent events to this URL
@@ -193,17 +191,26 @@ const Admin: React.FC = () => {
                 
                 <div className="flex items-center justify-between">
                   <p className="text-sm">consent.created</p>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={settings?.webhook_consent_created || false}
+                    onCheckedChange={(checked) => updateSettings({ webhook_consent_created: checked })}
+                  />
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <p className="text-sm">consent.updated</p>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={settings?.webhook_consent_updated || false}
+                    onCheckedChange={(checked) => updateSettings({ webhook_consent_updated: checked })}
+                  />
                 </div>
                 
                 <div className="flex items-center justify-between">
                   <p className="text-sm">risk.detected</p>
-                  <Switch defaultChecked />
+                  <Switch 
+                    checked={settings?.webhook_risk_detected || false}
+                    onCheckedChange={(checked) => updateSettings({ webhook_risk_detected: checked })}
+                  />
                 </div>
               </div>
               
@@ -220,66 +227,72 @@ const Admin: React.FC = () => {
           </Card>
         </TabsContent>
         
-        <TabsContent value="users" className="animate-fade-in">
+        <TabsContent value="ai" className="animate-fade-in">
           <Card>
             <CardHeader>
-              <CardTitle>User Management</CardTitle>
-              <CardDescription>Manage users and permissions</CardDescription>
+              <CardTitle>AI Configuration</CardTitle>
+              <CardDescription>Customize AI analysis preferences</CardDescription>
             </CardHeader>
             <CardContent className="space-y-6">
-              <div className="border rounded-lg overflow-hidden">
-                <table className="w-full">
-                  <thead>
-                    <tr className="bg-gray-50">
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Name</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Email</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Role</th>
-                      <th className="px-4 py-3 text-left text-sm font-medium text-gray-600">Status</th>
-                    </tr>
-                  </thead>
-                  <tbody className="divide-y">
-                    <tr>
-                      <td className="px-4 py-3 text-sm">Sarah Johnson</td>
-                      <td className="px-4 py-3 text-sm">sarah@example.com</td>
-                      <td className="px-4 py-3 text-sm">Admin</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          Active
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 text-sm">Michael Chen</td>
-                      <td className="px-4 py-3 text-sm">michael@example.com</td>
-                      <td className="px-4 py-3 text-sm">User</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          Active
-                        </span>
-                      </td>
-                    </tr>
-                    <tr>
-                      <td className="px-4 py-3 text-sm">Alex Smith</td>
-                      <td className="px-4 py-3 text-sm">alex@example.com</td>
-                      <td className="px-4 py-3 text-sm">User</td>
-                      <td className="px-4 py-3 text-sm">
-                        <span className="bg-gray-100 text-gray-800 text-xs px-2 py-1 rounded-full">
-                          Invited
-                        </span>
-                      </td>
-                    </tr>
-                  </tbody>
-                </table>
+              <div>
+                <label className="block text-sm font-medium mb-2">
+                  Risk Score Threshold
+                </label>
+                <div className="flex items-center">
+                  <Input 
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.risk_threshold}
+                    onChange={(e) => setFormData(prev => ({ ...prev, risk_threshold: Number(e.target.value) }))}
+                  />
+                  <span className="ml-2">%</span>
+                </div>
+                <p className="text-xs text-gray-500 mt-1">
+                  Consent documents scoring above this threshold will be flagged as high risk
+                </p>
               </div>
               
-              <div className="pt-4 flex justify-end">
-                <Button variant="outline" className="mr-2">
-                  Invite User
-                </Button>
-                <Button>
-                  Manage Permissions
-                </Button>
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">Enhanced Privacy Analysis</p>
+                  <p className="text-sm text-gray-500">More thorough privacy evaluation</p>
+                </div>
+                <Switch 
+                  checked={formData.enhanced_privacy_analysis}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, enhanced_privacy_analysis: checked }))}
+                />
               </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">GDPR Compliance Check</p>
+                  <p className="text-sm text-gray-500">Check terms against GDPR requirements</p>
+                </div>
+                <Switch 
+                  checked={formData.gdpr_compliance_check}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, gdpr_compliance_check: checked }))}
+                />
+              </div>
+              
+              <div className="flex items-center justify-between">
+                <div>
+                  <p className="font-medium">CCPA Compliance Check</p>
+                  <p className="text-sm text-gray-500">Check terms against CCPA requirements</p>
+                </div>
+                <Switch 
+                  checked={formData.ccpa_compliance_check}
+                  onCheckedChange={(checked) => setFormData(prev => ({ ...prev, ccpa_compliance_check: checked }))}
+                />
+              </div>
+              
+              <Button 
+                onClick={handleSaveSettings}
+                disabled={isLoading}
+                className="w-full"
+              >
+                {isLoading ? 'Saving...' : 'Save AI Settings'}
+              </Button>
             </CardContent>
           </Card>
         </TabsContent>

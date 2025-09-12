@@ -21,6 +21,7 @@ export type Database = {
           created_at: string | null
           document_title: string
           id: string
+          individual_terms_decisions: Json | null
           original_text: string | null
           risk_items: Json
           risk_score: number
@@ -33,6 +34,7 @@ export type Database = {
           created_at?: string | null
           document_title: string
           id?: string
+          individual_terms_decisions?: Json | null
           original_text?: string | null
           risk_items?: Json
           risk_score: number
@@ -45,6 +47,7 @@ export type Database = {
           created_at?: string | null
           document_title?: string
           id?: string
+          individual_terms_decisions?: Json | null
           original_text?: string | null
           risk_items?: Json
           risk_score?: number
@@ -77,6 +80,66 @@ export type Database = {
           full_name?: string | null
           id?: string
           updated_at?: string | null
+        }
+        Relationships: []
+      }
+      user_settings: {
+        Row: {
+          api_key: string | null
+          ccpa_compliance_check: boolean | null
+          company_name: string | null
+          contact_email: string | null
+          created_at: string
+          email_notifications: boolean | null
+          enable_analytics: boolean | null
+          enhanced_privacy_analysis: boolean | null
+          gdpr_compliance_check: boolean | null
+          id: string
+          risk_threshold: number | null
+          updated_at: string
+          user_id: string
+          webhook_consent_created: boolean | null
+          webhook_consent_updated: boolean | null
+          webhook_risk_detected: boolean | null
+          webhook_url: string | null
+        }
+        Insert: {
+          api_key?: string | null
+          ccpa_compliance_check?: boolean | null
+          company_name?: string | null
+          contact_email?: string | null
+          created_at?: string
+          email_notifications?: boolean | null
+          enable_analytics?: boolean | null
+          enhanced_privacy_analysis?: boolean | null
+          gdpr_compliance_check?: boolean | null
+          id?: string
+          risk_threshold?: number | null
+          updated_at?: string
+          user_id: string
+          webhook_consent_created?: boolean | null
+          webhook_consent_updated?: boolean | null
+          webhook_risk_detected?: boolean | null
+          webhook_url?: string | null
+        }
+        Update: {
+          api_key?: string | null
+          ccpa_compliance_check?: boolean | null
+          company_name?: string | null
+          contact_email?: string | null
+          created_at?: string
+          email_notifications?: boolean | null
+          enable_analytics?: boolean | null
+          enhanced_privacy_analysis?: boolean | null
+          gdpr_compliance_check?: boolean | null
+          id?: string
+          risk_threshold?: number | null
+          updated_at?: string
+          user_id?: string
+          webhook_consent_created?: boolean | null
+          webhook_consent_updated?: boolean | null
+          webhook_risk_detected?: boolean | null
+          webhook_url?: string | null
         }
         Relationships: []
       }

@@ -6,6 +6,7 @@ import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
 import { Upload, FileText, Send, ArrowRight } from 'lucide-react';
+import { analyzeConsentDocument } from '@/services/analysisService';
 
 const ConsentAnalyzer: React.FC = () => {
   const navigate = useNavigate();
@@ -42,7 +43,7 @@ const ConsentAnalyzer: React.FC = () => {
     }
   };
 
-  const handleAnalyze = () => {
+  const handleAnalyze = async () => {
     if (!consentText.trim()) {
       toast.error('Please enter or upload consent text to analyze');
       return;
@@ -50,13 +51,25 @@ const ConsentAnalyzer: React.FC = () => {
 
     setIsAnalyzing(true);
     
-    // Simulate analysis delay
-    setTimeout(() => {
+    try {
+      // Perform actual AI analysis
+      const analysisResult = await analyzeConsentDocument(consentText);
+      
       setIsAnalyzing(false);
       toast.success('Analysis complete!');
-      // Navigate to the risk report page with the consent text
-      navigate('/report', { state: { consentText } });
-    }, 2500);
+      
+      // Navigate to the risk report page with analysis results
+      navigate('/report', { 
+        state: { 
+          analysisResult,
+          originalText: consentText
+        } 
+      });
+    } catch (error) {
+      console.error('Analysis failed:', error);
+      setIsAnalyzing(false);
+      toast.error('Analysis failed. Please try again.');
+    }
   };
 
   return (

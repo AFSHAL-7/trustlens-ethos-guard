@@ -1,0 +1,307 @@
+interface AnalysisResult {
+  documentTitle: string;
+  riskScore: number;
+  riskItems: Array<{
+    clause: string;
+    risk: string;
+    impact: string;
+    recommendation: string;
+    severity: 'low' | 'medium' | 'high';
+  }>;
+  summaryData: Array<{
+    title: string;
+    content: string;
+    riskLevel: 'low' | 'medium' | 'high';
+  }>;
+  individualTerms: Array<{
+    id: string;
+    title: string;
+    description: string;
+    risk: 'low' | 'medium' | 'high';
+    isRequired: boolean;
+  }>;
+}
+
+export const analyzeConsentDocument = async (text: string): Promise<AnalysisResult> => {
+  // Simulate AI analysis processing time
+  await new Promise(resolve => setTimeout(resolve, 2000));
+
+  // Extract document title from text or generate one
+  const documentTitle = extractDocumentTitle(text) || "Terms of Service Document";
+  
+  // Parse text for risk analysis
+  const riskItems = analyzeRiskItems(text);
+  const summaryData = generateSummary(text, riskItems);
+  const individualTerms = extractIndividualTerms(text);
+  
+  // Calculate overall risk score
+  const riskScore = calculateRiskScore(riskItems, text);
+
+  return {
+    documentTitle,
+    riskScore,
+    riskItems,
+    summaryData,
+    individualTerms
+  };
+};
+
+function extractDocumentTitle(text: string): string | null {
+  // Look for common title patterns
+  const titlePatterns = [
+    /(?:terms?\s+(?:of\s+)?(?:service|use))/i,
+    /(?:privacy\s+policy)/i,
+    /(?:user\s+agreement)/i,
+    /(?:end\s+user\s+license\s+agreement)/i,
+    /(?:cookie\s+policy)/i,
+    /(?:data\s+protection\s+policy)/i
+  ];
+
+  for (const pattern of titlePatterns) {
+    const match = text.match(pattern);
+    if (match) {
+      return match[0].replace(/^\w/, c => c.toUpperCase());
+    }
+  }
+
+  return null;
+}
+
+function analyzeRiskItems(text: string): AnalysisResult['riskItems'] {
+  const riskItems: AnalysisResult['riskItems'] = [];
+  
+  // Data collection analysis
+  if (text.toLowerCase().includes('collect') && (text.toLowerCase().includes('data') || text.toLowerCase().includes('information'))) {
+    riskItems.push({
+      clause: "Data Collection and Usage",
+      risk: "The document indicates collection of personal data which may include sensitive information",
+      impact: text.toLowerCase().includes('share') || text.toLowerCase().includes('third') 
+        ? "High privacy impact with potential data sharing" 
+        : "Medium privacy impact from data collection",
+      recommendation: "Review what specific data is collected and how it's used",
+      severity: text.toLowerCase().includes('location') || text.toLowerCase().includes('biometric') ? 'high' : 'medium'
+    });
+  }
+
+  // Third-party sharing analysis
+  if (text.toLowerCase().includes('share') || text.toLowerCase().includes('third') || text.toLowerCase().includes('partner')) {
+    riskItems.push({
+      clause: "Third-Party Data Sharing",
+      risk: "Data may be shared with third-party partners or service providers",
+      impact: "Loss of control over personal information with external entities",
+      recommendation: "Request transparency about third-party partners and sharing purposes",
+      severity: 'high'
+    });
+  }
+
+  // Marketing and advertising analysis
+  if (text.toLowerCase().includes('marketing') || text.toLowerCase().includes('advertis') || text.toLowerCase().includes('promotional')) {
+    riskItems.push({
+      clause: "Marketing and Advertising",
+      risk: "Personal data may be used for marketing purposes and targeted advertising",
+      impact: "Increased exposure to unwanted communications and profiling",
+      recommendation: "Look for opt-out options for marketing communications",
+      severity: 'medium'
+    });
+  }
+
+  // Cookies and tracking analysis
+  if (text.toLowerCase().includes('cookie') || text.toLowerCase().includes('tracking') || text.toLowerCase().includes('analytics')) {
+    riskItems.push({
+      clause: "Cookies and Tracking",
+      risk: "Website uses cookies and tracking technologies to monitor user behavior",
+      impact: "Digital footprint creation and behavioral profiling across websites",
+      recommendation: "Check cookie preferences and opt-out mechanisms",
+      severity: 'medium'
+    });
+  }
+
+  // Data retention analysis
+  if (text.toLowerCase().includes('retain') || text.toLowerCase().includes('delete') || text.toLowerCase().includes('storage')) {
+    riskItems.push({
+      clause: "Data Retention and Deletion",
+      risk: "Unclear or extended data retention periods may apply",
+      impact: text.toLowerCase().includes('indefinitely') || text.toLowerCase().includes('permanent') 
+        ? "High risk of permanent data storage" 
+        : "Medium risk from data retention practices",
+      recommendation: "Understand data deletion rights and retention periods",
+      severity: text.toLowerCase().includes('indefinitely') ? 'high' : 'medium'
+    });
+  }
+
+  // If no specific risks found, add general privacy risk
+  if (riskItems.length === 0) {
+    riskItems.push({
+      clause: "General Privacy Terms",
+      risk: "Standard privacy terms that may affect your personal data",
+      impact: "Basic privacy implications from service usage",
+      recommendation: "Review the complete terms to understand your privacy rights",
+      severity: 'low'
+    });
+  }
+
+  return riskItems;
+}
+
+function generateSummary(text: string, riskItems: AnalysisResult['riskItems']): AnalysisResult['summaryData'] {
+  const summary: AnalysisResult['summaryData'] = [];
+
+  // Data practices summary
+  const hasDataCollection = text.toLowerCase().includes('collect');
+  const hasDataSharing = text.toLowerCase().includes('share') || text.toLowerCase().includes('third');
+  
+  if (hasDataCollection || hasDataSharing) {
+    summary.push({
+      title: "Data Collection Practices",
+      content: hasDataSharing 
+        ? "The service collects personal data and may share it with third parties. Review what information is collected and with whom it's shared."
+        : "The service collects personal data for its operations. Consider what information you're comfortable sharing.",
+      riskLevel: hasDataSharing ? 'high' : 'medium'
+    });
+  }
+
+  // User rights summary
+  const hasRights = text.toLowerCase().includes('right') || text.toLowerCase().includes('access') || text.toLowerCase().includes('delete');
+  summary.push({
+    title: "User Rights and Control",
+    content: hasRights 
+      ? "The document outlines user rights regarding personal data. Review these rights to understand your control over your information."
+      : "Limited information about user rights. You may want to inquire about your data control options.",
+    riskLevel: hasRights ? 'low' : 'medium'
+  });
+
+  // Security measures summary
+  const hasSecurity = text.toLowerCase().includes('security') || text.toLowerCase().includes('protect') || text.toLowerCase().includes('encrypt');
+  summary.push({
+    title: "Security Measures",
+    content: hasSecurity 
+      ? "The document mentions security measures to protect your data. Review these protections to assess adequacy."
+      : "Limited information about security measures. Consider asking about data protection practices.",
+    riskLevel: hasSecurity ? 'low' : 'medium'
+  });
+
+  return summary;
+}
+
+function extractIndividualTerms(text: string): AnalysisResult['individualTerms'] {
+  const terms: AnalysisResult['individualTerms'] = [];
+  
+  // Essential service terms
+  terms.push({
+    id: 'essential-service',
+    title: 'Essential Service Operations',
+    description: 'Basic functionality and core service features',
+    risk: 'low',
+    isRequired: true
+  });
+
+  // Data collection terms
+  if (text.toLowerCase().includes('collect')) {
+    terms.push({
+      id: 'data-collection',
+      title: 'Personal Data Collection',
+      description: 'Collection of your personal information for service provision',
+      risk: text.toLowerCase().includes('sensitive') ? 'high' : 'medium',
+      isRequired: false
+    });
+  }
+
+  // Marketing terms
+  if (text.toLowerCase().includes('marketing') || text.toLowerCase().includes('promotional')) {
+    terms.push({
+      id: 'marketing',
+      title: 'Marketing Communications',
+      description: 'Receiving promotional emails and marketing materials',
+      risk: 'low',
+      isRequired: false
+    });
+  }
+
+  // Analytics terms
+  if (text.toLowerCase().includes('analytics') || text.toLowerCase().includes('tracking')) {
+    terms.push({
+      id: 'analytics',
+      title: 'Analytics and Tracking',
+      description: 'Usage analytics and behavioral tracking for service improvement',
+      risk: 'medium',
+      isRequired: false
+    });
+  }
+
+  // Third-party sharing
+  if (text.toLowerCase().includes('share') || text.toLowerCase().includes('third')) {
+    terms.push({
+      id: 'third-party-sharing',
+      title: 'Third-Party Data Sharing',
+      description: 'Sharing your data with partner organizations and service providers',
+      risk: 'high',
+      isRequired: false
+    });
+  }
+
+  // Location data
+  if (text.toLowerCase().includes('location') || text.toLowerCase().includes('gps')) {
+    terms.push({
+      id: 'location-data',
+      title: 'Location Data Collection',
+      description: 'Accessing and storing your device location information',
+      risk: 'high',
+      isRequired: false
+    });
+  }
+
+  // Cookies
+  if (text.toLowerCase().includes('cookie')) {
+    terms.push({
+      id: 'cookies',
+      title: 'Cookie Usage',
+      description: 'Storing cookies on your device for functionality and tracking',
+      risk: 'medium',
+      isRequired: false
+    });
+  }
+
+  return terms;
+}
+
+function calculateRiskScore(riskItems: AnalysisResult['riskItems'], text: string): number {
+  let baseScore = 30; // Baseline risk score
+  
+  // Add points for each risk item based on severity
+  riskItems.forEach(item => {
+    switch (item.severity) {
+      case 'high':
+        baseScore += 20;
+        break;
+      case 'medium':
+        baseScore += 10;
+        break;
+      case 'low':
+        baseScore += 5;
+        break;
+    }
+  });
+
+  // Additional risk factors
+  const riskKeywords = [
+    { keyword: 'indefinitely', points: 15 },
+    { keyword: 'permanent', points: 15 },
+    { keyword: 'irrevocable', points: 10 },
+    { keyword: 'biometric', points: 20 },
+    { keyword: 'location', points: 10 },
+    { keyword: 'children', points: 15 },
+    { keyword: 'minor', points: 15 },
+    { keyword: 'sell', points: 25 },
+    { keyword: 'monetize', points: 20 }
+  ];
+
+  const lowerText = text.toLowerCase();
+  riskKeywords.forEach(({ keyword, points }) => {
+    if (lowerText.includes(keyword)) {
+      baseScore += points;
+    }
+  });
+
+  // Cap the score at 100
+  return Math.min(baseScore, 100);
+}

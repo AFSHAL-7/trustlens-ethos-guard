@@ -15,6 +15,7 @@ import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
 import RiskItemsList from '@/components/risk-report/RiskItemsList';
 import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
 import OriginalDocument from '@/components/risk-report/OriginalDocument';
+import IndividualTermsCard from '@/components/risk-report/IndividualTermsCard';
 import ExportButton from '@/components/ExportButton';
 
 export interface RiskItem {
@@ -30,57 +31,50 @@ export interface SummarySection {
   riskLevel: 'low' | 'medium' | 'high';
 }
 
+interface IndividualTerm {
+  id: string;
+  title: string;
+  description: string;
+  risk: 'low' | 'medium' | 'high';
+  isRequired: boolean;
+}
+
+interface IndividualTermDecision {
+  termId: string;
+  accepted: boolean;
+}
+
 const RiskReport: React.FC = () => {
   const location = useLocation();
   const navigate = useNavigate();
   const { user } = useAuth();
   const [consentDecision, setConsentDecision] = useState<'allow' | 'partial' | 'deny' | null>(null);
   const [saving, setSaving] = useState(false);
+  const [showIndividualTerms, setShowIndividualTerms] = useState(false);
+  const [individualTermDecisions, setIndividualTermDecisions] = useState<IndividualTermDecision[]>([]);
 
-  const mockData = {
-    documentTitle: "Social Media Platform Terms of Service",
-    riskScore: 72,
-    riskItems: [
-      {
-        clause: "Data Collection and Usage",
-        risk: "Extensive personal data collection including browsing habits, location data, and social connections",
-        impact: "High privacy invasion with potential for data profiling and targeted manipulation",
-        recommendation: "Request specific opt-out mechanisms for non-essential data collection"
-      },
-      {
-        clause: "Third-Party Data Sharing",
-        risk: "Broad permissions to share data with unnamed third-party partners",
-        impact: "Loss of control over personal information with unknown recipients",
-        recommendation: "Demand transparency about third-party partners and purpose of sharing"
-      },
-      {
-        clause: "Automated Decision Making",
-        risk: "AI-driven content curation and user experience personalization",
-        impact: "Potential algorithmic bias affecting content exposure and social interactions",
-        recommendation: "Seek options to disable or modify automated decision-making features"
-      }
-    ] as RiskItem[],
-    summaryData: [
-      {
-        title: "Data Collection Practices",
-        content: "The platform collects extensive personal data including location, browsing habits, device information, and social connections. This creates a comprehensive profile that extends beyond typical usage patterns.",
-        riskLevel: "high" as const
-      },
-      {
-        title: "User Rights and Control",
-        content: "Limited user control over data usage with complex opt-out procedures. Account deletion may not result in complete data removal from backup systems.",
-        riskLevel: "medium" as const
-      },
-      {
-        title: "Third-Party Integration",
-        content: "Data sharing agreements with advertising networks and analytics providers. Users have minimal visibility into these partnerships and data usage.",
-        riskLevel: "high" as const
-      }
-    ] as SummarySection[],
-    originalText: location.state?.originalText || "Original document text would appear here..."
+  // Get analysis results from location state
+  const analysisResult = location.state?.analysisResult;
+  const originalText = location.state?.originalText;
+
+  // Use analysis results or fall back to defaults for missing data
+  const reportData = analysisResult || {
+    documentTitle: "Untitled Document",
+    riskScore: 0,
+    riskItems: [],
+    summaryData: [],
+    individualTerms: []
   };
 
-  const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny') => {
+  // Redirect to analyzer if no data
+  useEffect(() => {
+    if (!analysisResult && !originalText) {
+      toast.error('No analysis data found. Please analyze a document first.');
+      navigate('/analyzer');
+    }
+  }, [analysisResult, originalText, navigate]);
+
+  const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny', termDecisions?: IndividualTermDecision[]) => {
     if (!user) {
       toast.error('Please sign in to save your decision');
       return;
@@ -93,12 +87,13 @@ const RiskReport: React.FC = () => {
       // Save the consent analysis to database - convert arrays to JSON
       const analysisData = {
         user_id: user.id,
-        document_title: mockData.documentTitle,
-        risk_score: mockData.riskScore,
+        document_title: reportData.documentTitle,
+        risk_score: reportData.riskScore,
         consent_decision: decision,
-        risk_items: JSON.stringify(mockData.riskItems),
-        summary_sections: JSON.stringify(mockData.summaryData),
-        original_text: mockData.originalText
+        risk_items: JSON.stringify(reportData.riskItems),
+        summary_sections: JSON.stringify(reportData.summaryData),
+        original_text: originalText || '',
+        individual_terms_decisions: JSON.stringify(termDecisions || [])
       };
 
       const { error: insertError } = await supabase
@@ -119,14 +114,14 @@ const RiskReport: React.FC = () => {
         .single();
 
       const newTotalAnalyses = (currentStats?.total_analyses || 0) + 1;
-      const newHighRiskAnalyses = mockData.riskScore > 70 
+      const newHighRiskAnalyses = reportData.riskScore > 70 
         ? (currentStats?.high_risk_analyses || 0) + 1 
         : (currentStats?.high_risk_analyses || 0);
       const newConsentDecisions = (currentStats?.consent_decisions_count || 0) + 1;
       
       const currentAvgScore = currentStats?.average_risk_score || 0;
       const currentTotal = currentStats?.total_analyses || 0;
-      const newAvgScore = Math.round(((currentAvgScore * currentTotal) + mockData.riskScore) / newTotalAnalyses);
+      const newAvgScore = Math.round(((currentAvgScore * currentTotal) + reportData.riskScore) / newTotalAnalyses);
 
       const { error: statsError } = await supabase
         .from('user_stats')
@@ -150,10 +145,10 @@ const RiskReport: React.FC = () => {
         navigate('/dashboard', {
           state: {
             newConsent: {
-              title: mockData.documentTitle,
+              title: reportData.documentTitle,
               action: decision,
               timestamp: new Date().toISOString(),
-              riskScore: mockData.riskScore
+              riskScore: reportData.riskScore
             }
           }
         });
@@ -165,6 +160,14 @@ const RiskReport: React.FC = () => {
     } finally {
       setSaving(false);
     }
+  };
+
+  const handleIndividualTermsChange = (decisions: IndividualTermDecision[]) => {
+    setIndividualTermDecisions(decisions);
+  };
+
+  const handlePartialConsent = () => {
+    setShowIndividualTerms(true);
   };
 
   return (
@@ -185,7 +188,7 @@ const RiskReport: React.FC = () => {
               <h1 className="text-4xl font-bold mb-3 text-foreground">Risk Analysis Report</h1>
               <p className="text-muted-foreground text-lg">Comprehensive analysis of consent document risks and recommendations</p>
             </div>
-            <ExportButton reportData={mockData} />
+            <ExportButton reportData={reportData} />
           </div>
         </div>
 
@@ -193,15 +196,15 @@ const RiskReport: React.FC = () => {
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
             <RiskScoreCard 
-              riskScore={mockData.riskScore}
+              riskScore={reportData.riskScore}
             />
             
             <DocumentAnalysisCard 
-              risks={mockData.riskItems.map((item, index) => ({
+              risks={reportData.riskItems.map((item, index) => ({
                 id: `risk-${index}`,
                 title: item.clause,
                 description: item.risk,
-                severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+                severity: item.severity || (reportData.riskScore > 80 ? 'high' : reportData.riskScore > 60 ? 'medium' : 'low'),
                 category: 'Privacy',
                 specific_clause: item.clause,
                 impact: item.impact,
@@ -209,29 +212,37 @@ const RiskReport: React.FC = () => {
               }))}
             />
             
-            <RiskItemsList risks={mockData.riskItems.map((item, index) => ({
+            <RiskItemsList risks={reportData.riskItems.map((item, index) => ({
               id: `risk-${index}`,
               title: item.clause,
               description: item.risk,
-              severity: mockData.riskScore > 80 ? 'high' : mockData.riskScore > 60 ? 'medium' : 'low',
+              severity: item.severity || (reportData.riskScore > 80 ? 'high' : reportData.riskScore > 60 ? 'medium' : 'low'),
               category: 'Privacy',
               specific_clause: item.clause,
               impact: item.impact,
               recommendation: item.recommendation
             }))} />
+
+            {reportData.individualTerms && reportData.individualTerms.length > 0 && (
+              <IndividualTermsCard 
+                terms={reportData.individualTerms}
+                onTermsChange={handleIndividualTermsChange}
+                disabled={consentDecision !== null}
+              />
+            )}
             
-            <DetailedAnalysis summary={mockData.summaryData.map(section => ({
+            <DetailedAnalysis summary={reportData.summaryData.map(section => ({
               title: section.title,
               content: section.content,
               risk_level: section.riskLevel,
               specific_issues: [
-                "Extensive data collection beyond necessary functionality",
-                "Unclear data retention policies",
-                "Limited user control over personal information"
+                "Review data collection practices",
+                "Understand data retention policies", 
+                "Assess user control options"
               ]
             }))} />
             
-            <OriginalDocument consentText={mockData.originalText} />
+            <OriginalDocument consentText={originalText || 'Original document text not available'} />
           </div>
 
           {/* Sidebar */}
@@ -239,6 +250,8 @@ const RiskReport: React.FC = () => {
             <ConsentDecisionCard 
               onConsent={handleSaveDecision}
               consentAction={consentDecision}
+              hasIndividualTerms={reportData.individualTerms && reportData.individualTerms.length > 0}
+              onIndividualTermsChange={handleIndividualTermsChange}
             />
           </div>
         </div>
