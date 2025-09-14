@@ -6,6 +6,7 @@ import { Check, AlertTriangle, XCircle, Search, TrendingUp, BarChart3, Target } 
 import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, ResponsiveContainer } from 'recharts';
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
+import { supabase } from '@/integrations/supabase/client';
 
 interface ConsentRecord {
   id: string;
@@ -31,41 +32,41 @@ const Dashboard: React.FC = () => {
     { name: 'Jun', allow: 6, partial: 3, deny: 2 },
   ];
   
-  // Initial mock data
+  // Load real consent analyses from database
   useEffect(() => {
-    const initialConsents: ConsentRecord[] = [
-      {
-        id: '1',
-        title: 'Social Media App Terms',
-        action: 'partial',
-        timestamp: '2025-03-15T14:30:00Z',
-        riskScore: 72
-      },
-      {
-        id: '2',
-        title: 'E-commerce Website Privacy Policy',
-        action: 'allow',
-        timestamp: '2025-03-10T09:15:00Z',
-        riskScore: 58
-      },
-      {
-        id: '3',
-        title: 'Finance App Data Sharing',
-        action: 'deny',
-        timestamp: '2025-03-05T16:45:00Z',
-        riskScore: 89
-      },
-      {
-        id: '4',
-        title: 'Video Streaming Service Terms',
-        action: 'allow',
-        timestamp: '2025-02-28T11:20:00Z',
-        riskScore: 62
+    const loadConsentHistory = async () => {
+      if (!user) return;
+      
+      try {
+        const { data: analyses, error } = await supabase
+          .from('consent_analyses')
+          .select('*')
+          .eq('user_id', user.id)
+          .order('created_at', { ascending: false });
+          
+        if (error) {
+          console.error('Error loading consent history:', error);
+          return;
+        }
+        
+        if (analyses) {
+          const consentRecords: ConsentRecord[] = analyses.map(analysis => ({
+            id: analysis.id,
+            title: analysis.document_title,
+            action: analysis.consent_decision as 'allow' | 'partial' | 'deny',
+            timestamp: analysis.created_at || analysis.analyzed_at || new Date().toISOString(),
+            riskScore: analysis.risk_score
+          }));
+          
+          setConsents(consentRecords);
+        }
+      } catch (error) {
+        console.error('Error loading consent history:', error);
       }
-    ];
+    };
     
-    setConsents(initialConsents);
-  }, []);
+    loadConsentHistory();
+  }, [user]);
   
   // Add new consent if passed from Risk Report
   useEffect(() => {

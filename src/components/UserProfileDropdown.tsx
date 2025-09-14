@@ -190,7 +190,10 @@ const UserProfileDropdown = () => {
           </>
         )}
         
-        <DropdownMenuItem className="text-foreground focus:text-foreground">
+        <DropdownMenuItem 
+          className="text-foreground focus:text-foreground"
+          onClick={() => window.location.href = '/admin'}
+        >
           <Settings className="mr-2 h-4 w-4" />
           <span>Settings</span>
         </DropdownMenuItem>

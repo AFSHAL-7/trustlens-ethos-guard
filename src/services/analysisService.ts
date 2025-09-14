@@ -146,41 +146,55 @@ function analyzeRiskItems(text: string): AnalysisResult['riskItems'] {
 function generateSummary(text: string, riskItems: AnalysisResult['riskItems']): AnalysisResult['summaryData'] {
   const summary: AnalysisResult['summaryData'] = [];
 
-  // Data practices summary
-  const hasDataCollection = text.toLowerCase().includes('collect');
-  const hasDataSharing = text.toLowerCase().includes('share') || text.toLowerCase().includes('third');
+  // Create a concise 4-5 line summary based on the text content
+  const summaryText = generateConciseSummary(text, riskItems);
   
-  if (hasDataCollection || hasDataSharing) {
-    summary.push({
-      title: "Data Collection Practices",
-      content: hasDataSharing 
-        ? "The service collects personal data and may share it with third parties. Review what information is collected and with whom it's shared."
-        : "The service collects personal data for its operations. Consider what information you're comfortable sharing.",
-      riskLevel: hasDataSharing ? 'high' : 'medium'
-    });
-  }
-
-  // User rights summary
-  const hasRights = text.toLowerCase().includes('right') || text.toLowerCase().includes('access') || text.toLowerCase().includes('delete');
   summary.push({
-    title: "User Rights and Control",
-    content: hasRights 
-      ? "The document outlines user rights regarding personal data. Review these rights to understand your control over your information."
-      : "Limited information about user rights. You may want to inquire about your data control options.",
-    riskLevel: hasRights ? 'low' : 'medium'
-  });
-
-  // Security measures summary
-  const hasSecurity = text.toLowerCase().includes('security') || text.toLowerCase().includes('protect') || text.toLowerCase().includes('encrypt');
-  summary.push({
-    title: "Security Measures",
-    content: hasSecurity 
-      ? "The document mentions security measures to protect your data. Review these protections to assess adequacy."
-      : "Limited information about security measures. Consider asking about data protection practices.",
-    riskLevel: hasSecurity ? 'low' : 'medium'
+    title: "Document Analysis Summary",
+    content: summaryText,
+    riskLevel: riskItems.some(item => item.severity === 'high') ? 'high' : 
+               riskItems.some(item => item.severity === 'medium') ? 'medium' : 'low'
   });
 
   return summary;
+}
+
+function generateConciseSummary(text: string, riskItems: AnalysisResult['riskItems']): string {
+  const summaryPoints: string[] = [];
+  const lowerText = text.toLowerCase();
+  
+  // Analyze key aspects and create concise points
+  if (lowerText.includes('collect') && (lowerText.includes('data') || lowerText.includes('information'))) {
+    const hasSharing = lowerText.includes('share') || lowerText.includes('third');
+    summaryPoints.push(`• Collects personal data${hasSharing ? ' and shares with third parties' : ' for service operations'}`);
+  }
+  
+  if (lowerText.includes('cookie') || lowerText.includes('tracking')) {
+    summaryPoints.push('• Uses cookies and tracking technologies for analytics');
+  }
+  
+  if (lowerText.includes('marketing') || lowerText.includes('promotional')) {
+    summaryPoints.push('• May use data for marketing and promotional communications');
+  }
+  
+  if (lowerText.includes('right') || lowerText.includes('access') || lowerText.includes('delete')) {
+    summaryPoints.push('• Provides user rights for data access and control');
+  } else {
+    summaryPoints.push('• Limited information about user data rights');
+  }
+  
+  // Add overall risk assessment
+  const highRiskItems = riskItems.filter(item => item.severity === 'high').length;
+  if (highRiskItems > 0) {
+    summaryPoints.push(`• ${highRiskItems} high-risk privacy concern${highRiskItems > 1 ? 's' : ''} identified`);
+  }
+  
+  // Ensure we have 4-5 points
+  if (summaryPoints.length < 4) {
+    summaryPoints.push('• Review all terms carefully before accepting');
+  }
+  
+  return summaryPoints.slice(0, 5).join('\n');
 }
 
 function extractIndividualTerms(text: string): AnalysisResult['individualTerms'] {

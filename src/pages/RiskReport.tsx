@@ -16,6 +16,7 @@ import RiskItemsList from '@/components/risk-report/RiskItemsList';
 import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
 import OriginalDocument from '@/components/risk-report/OriginalDocument';
 import IndividualTermsCard from '@/components/risk-report/IndividualTermsCard';
+import DocumentSummaryCard from '@/components/risk-report/DocumentSummaryCard';
 import ExportButton from '@/components/ExportButton';
 
 export interface RiskItem {
@@ -195,6 +196,12 @@ const RiskReport: React.FC = () => {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Main Content */}
           <div className="lg:col-span-2 space-y-8">
+            <DocumentSummaryCard 
+              documentTitle={reportData.documentTitle}
+              riskScore={reportData.riskScore}
+              summary={reportData.summaryData[0]?.content || 'Analysis complete. Review the detailed findings below.'}
+            />
+            
             <RiskScoreCard 
               riskScore={reportData.riskScore}
             />
