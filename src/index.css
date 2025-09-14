@@ -138,4 +138,23 @@
   .input-field {
     @apply w-full px-4 py-3 rounded-2xl border border-border bg-background text-foreground focus:border-primary focus:ring focus:ring-ring/20 transition-all duration-300;
   }
+
+  /* Fix dropdown visibility and hover states */
+  [data-radix-popper-content-wrapper] {
+    z-index: 50;
+  }
+
+  [role="menu"] {
+    @apply bg-popover border border-border shadow-lg;
+  }
+
+  [role="menuitem"]:hover,
+  [role="menuitem"]:focus {
+    @apply bg-accent text-accent-foreground;
+  }
+
+  /* Ensure dropdown menu items have proper background and visibility */
+  .dropdown-menu-item {
+    @apply px-2 py-1.5 text-foreground hover:bg-accent hover:text-accent-foreground focus:bg-accent focus:text-accent-foreground cursor-pointer;
+  }
 }

@@ -60,27 +60,10 @@ const Navbar: React.FC<NavbarProps> = ({ toggleSidebar, sidebarOpen }) => {
             >
               Dashboard
             </NavLink>
-            <NavLink to="/admin" 
-              className={({ isActive }) => 
-                isActive 
-                  ? "px-3 py-2 text-primary font-medium" 
-                  : "px-3 py-2 text-muted-foreground hover:text-primary transition-colors duration-300"
-              }
-            >
-              Admin
-            </NavLink>
           </nav>
           
           <div className="flex items-center gap-2">
             <ThemeToggle />
-            <Button 
-              variant="ghost" 
-              size="icon" 
-              className="text-muted-foreground hover:text-foreground"
-              onClick={() => navigate('/admin')}
-            >
-              <Settings className="h-5 w-5" />
-            </Button>
             
             {loading ? (
               <div className="h-10 w-10 bg-muted rounded-full animate-pulse"></div>

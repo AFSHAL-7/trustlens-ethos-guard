@@ -2,19 +2,11 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
 import { Button } from '@/components/ui/button';
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { Badge } from '@/components/ui/badge';
-import { Progress } from '@/components/ui/progress';
-import { ArrowLeft, Download, FileText, Shield, AlertTriangle, CheckCircle, XCircle } from 'lucide-react';
+import { ArrowLeft } from 'lucide-react';
 import { supabase } from '@/integrations/supabase/client';
 import { useAuth } from '@/contexts/AuthContext';
 import { toast } from 'sonner';
-import RiskScoreCard from '@/components/risk-report/RiskScoreCard';
-import DocumentAnalysisCard from '@/components/risk-report/DocumentAnalysisCard';
 import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
-import RiskItemsList from '@/components/risk-report/RiskItemsList';
-import DetailedAnalysis from '@/components/risk-report/DetailedAnalysis';
-import OriginalDocument from '@/components/risk-report/OriginalDocument';
 import IndividualTermsCard from '@/components/risk-report/IndividualTermsCard';
 import DocumentSummaryCard from '@/components/risk-report/DocumentSummaryCard';
 import ExportButton from '@/components/ExportButton';
@@ -201,34 +193,6 @@ const RiskReport: React.FC = () => {
               riskScore={reportData.riskScore}
               summary={reportData.summaryData[0]?.content || 'Analysis complete. Review the detailed findings below.'}
             />
-            
-            <RiskScoreCard 
-              riskScore={reportData.riskScore}
-            />
-            
-            <DocumentAnalysisCard 
-              risks={reportData.riskItems.map((item, index) => ({
-                id: `risk-${index}`,
-                title: item.clause,
-                description: item.risk,
-                severity: item.severity || (reportData.riskScore > 80 ? 'high' : reportData.riskScore > 60 ? 'medium' : 'low'),
-                category: 'Privacy',
-                specific_clause: item.clause,
-                impact: item.impact,
-                recommendation: item.recommendation
-              }))}
-            />
-            
-            <RiskItemsList risks={reportData.riskItems.map((item, index) => ({
-              id: `risk-${index}`,
-              title: item.clause,
-              description: item.risk,
-              severity: item.severity || (reportData.riskScore > 80 ? 'high' : reportData.riskScore > 60 ? 'medium' : 'low'),
-              category: 'Privacy',
-              specific_clause: item.clause,
-              impact: item.impact,
-              recommendation: item.recommendation
-            }))} />
 
             {reportData.individualTerms && reportData.individualTerms.length > 0 && (
               <IndividualTermsCard 
@@ -237,19 +201,6 @@ const RiskReport: React.FC = () => {
                 disabled={consentDecision !== null}
               />
             )}
-            
-            <DetailedAnalysis summary={reportData.summaryData.map(section => ({
-              title: section.title,
-              content: section.content,
-              risk_level: section.riskLevel,
-              specific_issues: [
-                "Review data collection practices",
-                "Understand data retention policies", 
-                "Assess user control options"
-              ]
-            }))} />
-            
-            <OriginalDocument consentText={originalText || 'Original document text not available'} />
           </div>
 
           {/* Sidebar */}
