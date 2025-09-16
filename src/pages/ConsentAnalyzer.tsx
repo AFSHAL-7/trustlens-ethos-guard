@@ -5,7 +5,7 @@ import { Button } from '@/components/ui/button';
 import { Textarea } from '@/components/ui/textarea';
 import { Card, CardContent, CardDescription, CardFooter, CardHeader, CardTitle } from '@/components/ui/card';
 import { toast } from 'sonner';
-import { Upload, FileText, Send, ArrowRight } from 'lucide-react';
+import { Upload, FileText, Send, ArrowRight, File, Image } from 'lucide-react';
 import { analyzeConsentDocument } from '@/services/analysisService';
 
 const ConsentAnalyzer: React.FC = () => {
@@ -13,33 +13,58 @@ const ConsentAnalyzer: React.FC = () => {
   const [consentText, setConsentText] = useState('');
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
+  const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [documentPreview, setDocumentPreview] = useState<string>('');
   const fileInputRef = React.useRef<HTMLInputElement>(null);
 
   const handleFileUpload = () => {
     fileInputRef.current?.click();
   };
 
-  const handleFileChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
       setIsUploading(true);
+      setUploadedFile(file);
       
-      // Simulate file reading delay
-      setTimeout(() => {
-        const reader = new FileReader();
-        reader.onload = (event) => {
-          if (event.target?.result) {
-            setConsentText(event.target.result as string);
-            setIsUploading(false);
-            toast.success(`File "${file.name}" uploaded successfully`);
-          }
-        };
-        reader.onerror = () => {
+      try {
+        // Handle different file types
+        if (file.type.startsWith('text/') || file.name.endsWith('.txt')) {
+          // Text files - read directly
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              const content = event.target.result as string;
+              setConsentText(content);
+              setDocumentPreview(content.substring(0, 500) + '...');
+              setIsUploading(false);
+              toast.success(`File "${file.name}" uploaded successfully`);
+            }
+          };
+          reader.readAsText(file);
+        } else if (file.type.startsWith('image/')) {
+          // Image files - show preview
+          const reader = new FileReader();
+          reader.onload = (event) => {
+            if (event.target?.result) {
+              setDocumentPreview(event.target.result as string);
+              setConsentText(`[Image uploaded: ${file.name}]`);
+              setIsUploading(false);
+              toast.success(`Image "${file.name}" uploaded successfully`);
+            }
+          };
+          reader.readAsDataURL(file);
+        } else {
+          // Other file types (PDF, DOCX, etc.) - show file info
+          setDocumentPreview(`Document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+          setConsentText(`[Document uploaded: ${file.name}]`);
           setIsUploading(false);
-          toast.error('Error reading file');
-        };
-        reader.readAsText(file);
-      }, 1000);
+          toast.success(`Document "${file.name}" uploaded successfully`);
+        }
+      } catch (error) {
+        setIsUploading(false);
+        toast.error('Error processing file');
+      }
     }
   };
 
@@ -98,9 +123,33 @@ const ConsentAnalyzer: React.FC = () => {
               type="file" 
               ref={fileInputRef} 
               className="hidden" 
-              accept=".txt,.pdf,.docx" 
               onChange={handleFileChange}
             />
+            
+            {/* Document Preview Section */}
+            {documentPreview && (
+              <div className="mt-4 p-4 border rounded-lg bg-muted/50">
+                <div className="flex items-center gap-2 mb-2">
+                  {uploadedFile?.type.startsWith('image/') ? (
+                    <Image className="h-4 w-4 text-primary" />
+                  ) : (
+                    <File className="h-4 w-4 text-primary" />
+                  )}
+                  <span className="text-sm font-medium">Document Preview</span>
+                </div>
+                {uploadedFile?.type.startsWith('image/') ? (
+                  <img 
+                    src={documentPreview} 
+                    alt="Uploaded document" 
+                    className="max-w-full h-auto max-h-48 rounded border object-contain"
+                  />
+                ) : (
+                  <div className="text-sm text-muted-foreground whitespace-pre-wrap">
+                    {documentPreview}
+                  </div>
+                )}
+              </div>
+            )}
           </CardContent>
           <CardFooter className="flex justify-between">
             <Button 
@@ -154,7 +203,7 @@ const ConsentAnalyzer: React.FC = () => {
               <div>
                 <h3 className="font-medium mb-1">1. Provide Content</h3>
                 <p className="text-sm text-gray-600">
-                  Upload a document or paste text containing terms and conditions
+                  Upload any document type (PDF, DOCX, images, text) or paste content directly
                 </p>
               </div>
             </div>
