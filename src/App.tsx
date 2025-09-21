@@ -26,18 +26,27 @@ const App = () => (
           <Routes>
             <Route path="/auth" element={<Auth />} />
             <Route path="/password-reset" element={<PasswordReset />} />
-            <Route path="/*" element={
+            <Route path="/" element={
               <Layout>
-                <Routes>
-                  <Route path="/" element={<Home />} />
-                  <Route path="/analyzer" element={<ConsentAnalyzer />} />
-                  <Route path="/report" element={<RiskReport />} />
-                  <Route path="/dashboard" element={<Dashboard />} />
-                  
-                  <Route path="*" element={<NotFound />} />
-                </Routes>
+                <Home />
               </Layout>
             } />
+            <Route path="/analyzer" element={
+              <Layout>
+                <ConsentAnalyzer />
+              </Layout>
+            } />
+            <Route path="/report" element={
+              <Layout>
+                <RiskReport />
+              </Layout>
+            } />
+            <Route path="/dashboard" element={
+              <Layout>
+                <Dashboard />
+              </Layout>
+            } />
+            <Route path="*" element={<NotFound />} />
           </Routes>
         </BrowserRouter>
       </TooltipProvider>
