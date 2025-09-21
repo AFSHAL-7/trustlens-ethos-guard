@@ -184,7 +184,7 @@ const Auth = () => {
     try {
       // Use Supabase auth directly for password reset
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/auth?mode=reset`,
+        redirectTo: `${window.location.origin}/password-reset`,
       });
 
       if (error) {

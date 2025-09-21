@@ -10,8 +10,8 @@ import Home from "./pages/Home";
 import ConsentAnalyzer from "./pages/ConsentAnalyzer";
 import RiskReport from "./pages/RiskReport";
 import Dashboard from "./pages/Dashboard";
-
 import Auth from "./pages/Auth";
+import PasswordReset from "./pages/PasswordReset";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -25,6 +25,7 @@ const App = () => (
         <BrowserRouter>
           <Routes>
             <Route path="/auth" element={<Auth />} />
+            <Route path="/password-reset" element={<PasswordReset />} />
             <Route path="/*" element={
               <Layout>
                 <Routes>
