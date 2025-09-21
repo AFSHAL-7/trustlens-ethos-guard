@@ -182,11 +182,13 @@ const Auth = () => {
 
     setLoading(true);
     try {
+      // Use Supabase auth directly for password reset
       const { error } = await supabase.auth.resetPasswordForEmail(forgotPasswordEmail, {
-        redirectTo: `${window.location.origin}/auth`,
+        redirectTo: `${window.location.origin}/auth?mode=reset`,
       });
 
       if (error) {
+        console.error('Password reset error:', error);
         toast.error(error.message || 'Failed to send reset email');
         return;
       }
@@ -195,6 +197,7 @@ const Auth = () => {
       setShowForgotPassword(false);
       setForgotPasswordEmail('');
     } catch (error: any) {
+      console.error('Password reset catch error:', error);
       toast.error('An unexpected error occurred. Please try again.');
     } finally {
       setLoading(false);

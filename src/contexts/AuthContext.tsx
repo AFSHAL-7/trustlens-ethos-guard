@@ -30,35 +30,7 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
   useEffect(() => {
     let mounted = true;
 
-    // Set up auth state listener first
-    const { data: { subscription } } = supabase.auth.onAuthStateChange(
-      async (event, session) => {
-        console.log('Auth state changed:', event, session?.user?.email || 'no user');
-        
-        if (!mounted) return;
-
-        setSession(session);
-        setUser(session?.user ?? null);
-        
-        // Handle specific auth events
-        if (event === 'SIGNED_IN') {
-          console.log('User signed in successfully');
-          toast.success('Welcome back!');
-        } else if (event === 'SIGNED_OUT') {
-          console.log('User signed out');
-          setUser(null);
-          setSession(null);
-        } else if (event === 'TOKEN_REFRESHED') {
-          console.log('Token refreshed successfully');
-        } else if (event === 'USER_UPDATED') {
-          console.log('User updated');
-        }
-        
-        setLoading(false);
-      }
-    );
-
-    // Get initial session
+    // Get initial session first
     const getInitialSession = async () => {
       try {
         const { data: { session }, error } = await supabase.auth.getSession();
@@ -85,6 +57,36 @@ export const AuthProvider: React.FC<{ children: React.ReactNode }> = ({ children
         }
       }
     };
+
+    // Set up auth state listener after getting initial session
+    const { data: { subscription } } = supabase.auth.onAuthStateChange(
+      (event, session) => {
+        console.log('Auth state changed:', event, session?.user?.email || 'no user');
+        
+        if (!mounted) return;
+
+        setSession(session);
+        setUser(session?.user ?? null);
+        
+        // Handle specific auth events
+        if (event === 'SIGNED_IN') {
+          console.log('User signed in successfully');
+          toast.success('Welcome back!');
+        } else if (event === 'SIGNED_OUT') {
+          console.log('User signed out');
+          setUser(null);
+          setSession(null);
+        } else if (event === 'TOKEN_REFRESHED') {
+          console.log('Token refreshed successfully');
+        } else if (event === 'USER_UPDATED') {
+          console.log('User updated');
+        }
+        
+        if (event === 'INITIAL_SESSION') {
+          setLoading(false);
+        }
+      }
+    );
 
     getInitialSession();
 
