@@ -184,6 +184,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      get_platform_stats: {
+        Args: Record<PropertyKey, never>
+        Returns: {
+          total_analyses: number
+          total_risk_issues: number
+          total_users: number
+        }[]
+      }
       increment_user_stats: {
         Args: { is_high_risk: boolean; new_risk_score: number; user_id: string }
         Returns: undefined

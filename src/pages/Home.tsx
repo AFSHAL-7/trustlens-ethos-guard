@@ -5,10 +5,13 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card';
 import { Shield, FileText, BarChart3, Users, ArrowRight, CheckCircle, AlertTriangle, Lock } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { useAuth } from '@/contexts/AuthContext';
+import { usePlatformStats } from '@/hooks/usePlatformStats';
+import { Skeleton } from '@/components/ui/skeleton';
 
 const Home = () => {
   const navigate = useNavigate();
   const { user } = useAuth();
+  const { data: platformStats, isLoading: statsLoading } = usePlatformStats();
 
   const features = [
     {
@@ -33,10 +36,31 @@ const Home = () => {
     }
   ];
 
+  const formatNumber = (num: number) => {
+    if (num >= 1000000) {
+      return `${(num / 1000000).toFixed(1)}M+`;
+    } else if (num >= 1000) {
+      return `${(num / 1000).toFixed(1)}K+`;
+    }
+    return num.toString();
+  };
+
   const stats = [
-    { icon: <CheckCircle className="h-5 w-5" />, label: "Analyses Completed", value: "10,000+" },
-    { icon: <AlertTriangle className="h-5 w-5" />, label: "Risk Issues Found", value: "2,500+" },
-    { icon: <Lock className="h-5 w-5" />, label: "Privacy Protected", value: "100%" }
+    { 
+      icon: <CheckCircle className="h-5 w-5" />, 
+      label: "Analyses Completed", 
+      value: statsLoading ? null : formatNumber(platformStats?.totalAnalyses || 0)
+    },
+    { 
+      icon: <AlertTriangle className="h-5 w-5" />, 
+      label: "Risk Issues Found", 
+      value: statsLoading ? null : formatNumber(platformStats?.totalRiskIssues || 0)
+    },
+    { 
+      icon: <Lock className="h-5 w-5" />, 
+      label: "Users Protected", 
+      value: statsLoading ? null : formatNumber(platformStats?.totalUsers || 0)
+    }
   ];
 
   return (
@@ -91,7 +115,11 @@ const Home = () => {
                 <div key={index} className="flex flex-col sm:flex-row items-center justify-center gap-2 text-muted-foreground">
                   {stat.icon}
                   <div className="text-center sm:text-left">
-                    <div className="font-semibold text-foreground text-lg sm:text-base">{stat.value}</div>
+                    {stat.value === null ? (
+                      <Skeleton className="h-6 w-16 mb-1 mx-auto sm:mx-0" />
+                    ) : (
+                      <div className="font-semibold text-foreground text-lg sm:text-base">{stat.value}</div>
+                    )}
                     <div className="text-xs sm:text-sm">{stat.label}</div>
                   </div>
                 </div>
