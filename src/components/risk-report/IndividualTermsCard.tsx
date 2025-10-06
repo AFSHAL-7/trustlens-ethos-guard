@@ -58,10 +58,10 @@ const IndividualTermsCard: React.FC<IndividualTermsCardProps> = ({
 
   const getRiskColor = (risk: string) => {
     switch(risk) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-orange-100 text-orange-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
+      case 'high': return 'bg-muted text-destructive';
+      case 'medium': return 'bg-muted text-orange-700 dark:text-orange-400';
+      case 'low': return 'bg-muted text-foreground';
+      default: return 'bg-muted text-muted-foreground';
     }
   };
 
@@ -82,8 +82,8 @@ const IndividualTermsCard: React.FC<IndividualTermsCardProps> = ({
             key={term.id}
             className={`p-4 rounded-lg border transition-all duration-200 ${
               termDecisions[term.id] 
-                ? 'bg-green-50 border-green-200' 
-                : 'bg-gray-50 border-gray-200'
+                ? 'bg-muted/50 border-border' 
+                : 'bg-muted/30 border-border'
             }`}
           >
             <div className="flex items-start justify-between gap-4">
@@ -116,19 +116,19 @@ const IndividualTermsCard: React.FC<IndividualTermsCardProps> = ({
                   checked={termDecisions[term.id]}
                   onCheckedChange={(checked) => handleTermToggle(term.id, checked)}
                   disabled={disabled || term.isRequired}
-                  className="data-[state=checked]:bg-green-500"
+                  className="data-[state=checked]:bg-primary"
                 />
               </div>
             </div>
           </div>
         ))}
         
-        <div className="mt-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+        <div className="mt-6 p-3 bg-muted border border-border rounded-lg">
           <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-blue-600 mt-0.5" />
+            <Info className="h-4 w-4 text-primary mt-0.5" />
             <div className="text-sm">
-              <p className="font-medium text-blue-900">How this works:</p>
-              <ul className="mt-1 text-blue-800 space-y-1">
+              <p className="font-medium text-foreground">How this works:</p>
+              <ul className="mt-1 text-muted-foreground space-y-1">
                 <li>• <strong>Required terms</strong> cannot be disabled - they're essential for the service</li>
                 <li>• <strong>Optional terms</strong> can be customized based on your privacy preferences</li>
                 <li>• You can change these settings later in most services</li>
