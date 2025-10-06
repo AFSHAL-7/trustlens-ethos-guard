@@ -16,8 +16,8 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
   ];
 
   return (
-    <div 
-      className={`bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out ${
+    <aside 
+      className={`bg-sidebar text-sidebar-foreground transition-all duration-300 ease-in-out border-r border-border h-full ${
         isOpen ? 'w-64' : 'w-0 md:w-16'
       } overflow-hidden`}
     >
@@ -34,10 +34,11 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
               <li key={item.name}>
                 <NavLink
                   to={item.path}
+                  end
                   className={({ isActive }) =>
-                    `flex items-center py-3 px-3 rounded-2xl transition-all duration-300 ${
+                    `flex items-center py-3 px-3 rounded-lg transition-all duration-300 ${
                       isActive
-                        ? 'bg-sidebar-accent text-sidebar-accent-foreground'
+                        ? 'bg-sidebar-accent text-sidebar-accent-foreground font-medium'
                         : 'text-sidebar-foreground/80 hover:bg-sidebar-accent/50'
                     }`
                   }
@@ -62,7 +63,7 @@ const Sidebar: React.FC<SidebarProps> = ({ isOpen }) => {
           </div>
         </div>
       </div>
-    </div>
+    </aside>
   );
 };
 
