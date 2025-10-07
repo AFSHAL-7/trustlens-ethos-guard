@@ -49,27 +49,27 @@ const IndividualTermsCard: React.FC<IndividualTermsCardProps> = ({
 
   const getRiskIcon = (risk: string) => {
     switch(risk) {
-      case 'high': return <AlertTriangle className="h-4 w-4 text-red-500" />;
-      case 'medium': return <Info className="h-4 w-4 text-orange-500" />;
-      case 'low': return <Shield className="h-4 w-4 text-green-500" />;
+      case 'high': return <AlertTriangle className="h-4 w-4 text-destructive" />;
+      case 'medium': return <Info className="h-4 w-4 text-orange-600 dark:text-orange-400" />;
+      case 'low': return <Shield className="h-4 w-4 text-accent" />;
       default: return null;
     }
   };
 
   const getRiskColor = (risk: string) => {
     switch(risk) {
-      case 'high': return 'bg-muted text-destructive';
-      case 'medium': return 'bg-muted text-orange-700 dark:text-orange-400';
-      case 'low': return 'bg-muted text-foreground';
-      default: return 'bg-muted text-muted-foreground';
+      case 'high': return 'bg-destructive/10 text-destructive border-destructive/20';
+      case 'medium': return 'bg-orange-100 text-orange-800 dark:bg-orange-950 dark:text-orange-300 border-orange-200 dark:border-orange-900';
+      case 'low': return 'bg-accent/10 text-accent border-accent/20';
+      default: return 'bg-muted text-muted-foreground border-border';
     }
   };
 
   return (
     <Card className="animate-fade-in">
       <CardHeader>
-        <CardTitle className="flex items-center gap-2">
-          <Info className="h-5 w-5 text-blue-500" />
+        <CardTitle className="flex items-center gap-2 text-foreground">
+          <Info className="h-5 w-5 text-primary" />
           Individual Terms & Conditions
         </CardTitle>
         <p className="text-sm text-muted-foreground">
@@ -82,24 +82,24 @@ const IndividualTermsCard: React.FC<IndividualTermsCardProps> = ({
             key={term.id}
             className={`p-4 rounded-lg border transition-all duration-200 ${
               termDecisions[term.id] 
-                ? 'bg-muted/50 border-border' 
-                : 'bg-muted/30 border-border'
+                ? 'bg-card border-primary/30' 
+                : 'bg-muted/50 border-border'
             }`}
           >
             <div className="flex items-start justify-between gap-4">
               <div className="flex-1 space-y-2">
-                <div className="flex items-center gap-2">
-                  <h4 className="font-medium text-sm">{term.title}</h4>
+                <div className="flex items-center gap-2 flex-wrap">
+                  <h4 className="font-medium text-sm text-foreground">{term.title}</h4>
                   {term.isRequired && (
                     <div className="flex items-center gap-1">
-                      <Lock className="h-3 w-3 text-gray-500" />
-                      <span className="text-xs text-gray-500">Required</span>
+                      <Lock className="h-3 w-3 text-muted-foreground" />
+                      <span className="text-xs text-muted-foreground">Required</span>
                     </div>
                   )}
                   <div className="flex items-center gap-1">
                     {getRiskIcon(term.risk)}
                     <Badge 
-                      variant="secondary"
+                      variant="outline"
                       className={`text-xs ${getRiskColor(term.risk)}`}
                     >
                       {term.risk} risk
@@ -123,15 +123,15 @@ const IndividualTermsCard: React.FC<IndividualTermsCardProps> = ({
           </div>
         ))}
         
-        <div className="mt-6 p-3 bg-muted border border-border rounded-lg">
+        <div className="mt-6 p-4 bg-primary/5 border border-primary/20 rounded-lg">
           <div className="flex items-start gap-2">
-            <Info className="h-4 w-4 text-primary mt-0.5" />
+            <Info className="h-4 w-4 text-primary mt-0.5 flex-shrink-0" />
             <div className="text-sm">
-              <p className="font-medium text-foreground">How this works:</p>
-              <ul className="mt-1 text-muted-foreground space-y-1">
-                <li>• <strong>Required terms</strong> cannot be disabled - they're essential for the service</li>
-                <li>• <strong>Optional terms</strong> can be customized based on your privacy preferences</li>
-                <li>• You can change these settings later in most services</li>
+              <p className="font-medium text-foreground mb-2">How this works:</p>
+              <ul className="text-muted-foreground space-y-1.5">
+                <li className="flex gap-2"><span className="text-foreground">•</span> <span><strong className="text-foreground">Required terms</strong> cannot be disabled - they're essential for the service</span></li>
+                <li className="flex gap-2"><span className="text-foreground">•</span> <span><strong className="text-foreground">Optional terms</strong> can be customized based on your privacy preferences</span></li>
+                <li className="flex gap-2"><span className="text-foreground">•</span> <span>You can change these settings later in most services</span></li>
               </ul>
             </div>
           </div>
