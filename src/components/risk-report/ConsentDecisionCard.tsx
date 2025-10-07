@@ -40,13 +40,13 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
     }
   };
   return (
-    <Card className="col-span-1 bg-gradient-to-r from-blue-50 to-blue-100 border-none shadow-soft animate-fade-in">
+    <Card className="col-span-1 bg-card border-border animate-fade-in">
       <CardHeader>
         <CardTitle className="text-foreground">Your Decision</CardTitle>
       </CardHeader>
       <CardContent className="space-y-3">
         <Button 
-          className="w-full bg-trustlens-green hover:bg-green-600 text-white flex justify-between items-center transition-all duration-300 hover:scale-105" 
+          className="w-full bg-accent hover:bg-accent/80 text-accent-foreground flex justify-between items-center transition-all duration-300 hover:scale-105" 
           onClick={() => handleIndividualDecision('allow')}
           disabled={consentAction !== null}
         >
@@ -57,7 +57,7 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
         {hasIndividualTerms && (
           <Button 
             variant="outline" 
-            className="w-full border-orange-400 text-orange-600 hover:bg-orange-50 flex justify-between items-center transition-all duration-300 hover:scale-105" 
+            className="w-full border-border bg-background text-foreground hover:bg-muted flex justify-between items-center transition-all duration-300 hover:scale-105" 
             onClick={() => handleIndividualDecision('partial')}
             disabled={consentAction !== null}
           >
@@ -68,7 +68,7 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
         
         <Button 
           variant="outline" 
-          className="w-full border-red-400 text-red-600 hover:bg-red-50 flex justify-between items-center transition-all duration-300 hover:scale-105" 
+          className="w-full border-destructive/30 bg-background text-destructive hover:bg-destructive/10 flex justify-between items-center transition-all duration-300 hover:scale-105" 
           onClick={() => handleIndividualDecision('deny')}
           disabled={consentAction !== null}
         >
@@ -78,18 +78,18 @@ const ConsentDecisionCard: React.FC<ConsentDecisionCardProps> = ({
       </CardContent>
       {consentAction && (
         <CardFooter className="animate-fade-in">
-          <div className="text-sm text-muted-foreground italic space-y-1">
+          <div className="text-sm space-y-1">
             {consentAction === 'allow' && (
-              <p className="text-green-600">✓ Full consent granted. Saving analysis...</p>
+              <p className="text-accent">✓ Full consent granted. Saving analysis...</p>
             )}
             {consentAction === 'partial' && (
-              <div className="text-orange-600">
+              <div className="text-foreground">
                 <p>⚡ Customized consent saved.</p>
-                <p className="text-xs">You can modify these preferences later.</p>
+                <p className="text-xs text-muted-foreground">You can modify these preferences later.</p>
               </div>
             )}
             {consentAction === 'deny' && (
-              <p className="text-red-600">✗ All terms rejected. Saving decision...</p>
+              <p className="text-destructive">✗ All terms rejected. Saving decision...</p>
             )}
           </div>
         </CardFooter>
