@@ -1,1 +1,4 @@
 project_id = "ynemjstlldiipyqazedz"
+
+[functions.analyze-consent]
+verify_jwt = false

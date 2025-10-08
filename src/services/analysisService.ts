@@ -1,5 +1,8 @@
+import { supabase } from "@/integrations/supabase/client";
+
 interface AnalysisResult {
   documentTitle: string;
+  companyName?: string;
   riskScore: number;
   riskItems: Array<{
     clause: string;
@@ -20,6 +23,12 @@ interface AnalysisResult {
     risk: 'low' | 'medium' | 'high';
     isRequired: boolean;
   }>;
+  safetyInsights?: {
+    comparisonToSafeServices: string;
+    recommendedUsage: string;
+    trustScore: number;
+    keyWarnings: string[];
+  };
 }
 
 function validateTermsAndConditions(text: string): { isValid: boolean; message?: string } {
@@ -103,27 +112,41 @@ export const analyzeConsentDocument = async (text: string): Promise<AnalysisResu
     throw new Error(validation.message);
   }
 
-  // Simulate AI analysis processing time
-  await new Promise(resolve => setTimeout(resolve, 2000));
+  try {
+    // Call the AI-powered analysis edge function
+    const { data, error } = await supabase.functions.invoke('analyze-consent', {
+      body: { text }
+    });
 
-  // Extract document title from text or generate one
-  const documentTitle = extractDocumentTitle(text) || "Terms of Service Document";
-  
-  // Parse text for risk analysis
-  const riskItems = analyzeRiskItems(text);
-  const summaryData = generateSummary(text, riskItems);
-  const individualTerms = extractIndividualTerms(text);
-  
-  // Calculate overall risk score
-  const riskScore = calculateRiskScore(riskItems, text);
+    if (error) {
+      console.error("Edge function error:", error);
+      throw new Error(error.message || "Failed to analyze document");
+    }
 
-  return {
-    documentTitle,
-    riskScore,
-    riskItems,
-    summaryData,
-    individualTerms
-  };
+    if (!data) {
+      throw new Error("No data returned from analysis");
+    }
+
+    return data as AnalysisResult;
+  } catch (error) {
+    console.error("Analysis error:", error);
+    
+    // Fallback to basic analysis if AI fails
+    console.warn("Falling back to basic analysis");
+    const documentTitle = extractDocumentTitle(text) || "Terms of Service Document";
+    const riskItems = analyzeRiskItems(text);
+    const summaryData = generateSummary(text, riskItems);
+    const individualTerms = extractIndividualTerms(text);
+    const riskScore = calculateRiskScore(riskItems, text);
+
+    return {
+      documentTitle,
+      riskScore,
+      riskItems,
+      summaryData,
+      individualTerms
+    };
+  }
 };
 
 function extractDocumentTitle(text: string): string | null {

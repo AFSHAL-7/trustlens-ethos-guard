@@ -5,13 +5,15 @@ import { FileText, Clock, Shield } from 'lucide-react';
 
 interface DocumentSummaryCardProps {
   documentTitle: string;
+  companyName?: string;
   riskScore: number;
   summary: string;
   analysisTime?: string;
 }
 
 const DocumentSummaryCard: React.FC<DocumentSummaryCardProps> = ({ 
-  documentTitle, 
+  documentTitle,
+  companyName,
   riskScore, 
   summary,
   analysisTime = "Just now"
@@ -34,6 +36,11 @@ const DocumentSummaryCard: React.FC<DocumentSummaryCardProps> = ({
             </div>
             <div>
               <CardTitle className="text-lg">{documentTitle}</CardTitle>
+              {companyName && (
+                <div className="text-sm font-medium text-primary mt-1">
+                  {companyName}
+                </div>
+              )}
               <CardDescription className="flex items-center gap-2 mt-1">
                 <Clock className="h-3 w-3" />
                 Analyzed {analysisTime}

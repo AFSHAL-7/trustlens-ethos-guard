@@ -9,6 +9,7 @@ import { toast } from 'sonner';
 import ConsentDecisionCard from '@/components/risk-report/ConsentDecisionCard';
 import IndividualTermsCard from '@/components/risk-report/IndividualTermsCard';
 import DocumentSummaryCard from '@/components/risk-report/DocumentSummaryCard';
+import SafetyInsightsCard from '@/components/risk-report/SafetyInsightsCard';
 import ExportButton from '@/components/ExportButton';
 
 export interface RiskItem {
@@ -190,9 +191,14 @@ const RiskReport: React.FC = () => {
           <div className="lg:col-span-2 space-y-8">
             <DocumentSummaryCard 
               documentTitle={reportData.documentTitle}
+              companyName={reportData.companyName}
               riskScore={reportData.riskScore}
               summary={reportData.summaryData[0]?.content || 'Analysis complete. Review the detailed findings below.'}
             />
+
+            {reportData.safetyInsights && (
+              <SafetyInsightsCard insights={reportData.safetyInsights} />
+            )}
 
             {reportData.individualTerms && reportData.individualTerms.length > 0 && (
               <IndividualTermsCard 
