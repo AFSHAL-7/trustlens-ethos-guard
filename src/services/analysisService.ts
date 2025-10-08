@@ -22,7 +22,87 @@ interface AnalysisResult {
   }>;
 }
 
+function validateTermsAndConditions(text: string): { isValid: boolean; message?: string } {
+  // Check minimum length
+  if (text.trim().length < 100) {
+    return {
+      isValid: false,
+      message: "The provided text is too short to be valid terms and conditions. Please provide a complete document."
+    };
+  }
+
+  // Check for placeholder or test content
+  const testPatterns = [
+    /\[image uploaded:/i,
+    /\[document uploaded:/i,
+    /^test$/i,
+    /^sample$/i,
+    /lorem ipsum/i
+  ];
+
+  for (const pattern of testPatterns) {
+    if (pattern.test(text)) {
+      return {
+        isValid: false,
+        message: "Please provide actual terms and conditions text, not file names or placeholder content."
+      };
+    }
+  }
+
+  // Check for legal/policy indicators
+  const legalIndicators = [
+    /terms?\s+(?:of\s+)?(?:service|use)/i,
+    /privacy\s+policy/i,
+    /user\s+agreement/i,
+    /end\s+user\s+license\s+agreement/i,
+    /cookie\s+policy/i,
+    /data\s+(?:protection|processing)\s+(?:policy|agreement)/i,
+    /acceptable\s+use\s+policy/i,
+    /conditions?\s+of\s+use/i,
+    /legal\s+(?:notice|agreement)/i
+  ];
+
+  const hasLegalTitle = legalIndicators.some(pattern => pattern.test(text));
+
+  // Check for common legal/policy keywords
+  const legalKeywords = [
+    'agree', 'rights', 'obligation', 'liability', 'consent',
+    'data', 'privacy', 'collect', 'process', 'information',
+    'service', 'user', 'personal', 'policy', 'compliance',
+    'protection', 'security', 'disclosure', 'jurisdiction'
+  ];
+
+  const lowerText = text.toLowerCase();
+  const keywordMatches = legalKeywords.filter(keyword => lowerText.includes(keyword)).length;
+
+  // Document should have legal title OR multiple legal keywords
+  if (!hasLegalTitle && keywordMatches < 5) {
+    return {
+      isValid: false,
+      message: "This doesn't appear to be a terms and conditions or privacy policy document. Please provide proper legal terms, privacy policy, or user agreement text."
+    };
+  }
+
+  // Check for minimum structure (paragraphs or sections)
+  const hasStructure = text.split('\n').filter(line => line.trim().length > 20).length >= 5;
+  
+  if (!hasStructure) {
+    return {
+      isValid: false,
+      message: "The document appears incomplete. Please provide a complete terms and conditions or privacy policy with proper sections and content."
+    };
+  }
+
+  return { isValid: true };
+}
+
 export const analyzeConsentDocument = async (text: string): Promise<AnalysisResult> => {
+  // Validate that the content is actually terms and conditions
+  const validation = validateTermsAndConditions(text);
+  if (!validation.isValid) {
+    throw new Error(validation.message);
+  }
+
   // Simulate AI analysis processing time
   await new Promise(resolve => setTimeout(resolve, 2000));
 
