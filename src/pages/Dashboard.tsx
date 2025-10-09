@@ -33,7 +33,7 @@ const Dashboard: React.FC = () => {
       try {
         const { data: analyses, error } = await supabase
           .from('consent_analyses')
-          .select('*')
+          .select('id, document_title, consent_decision, risk_score, created_at, analyzed_at')
           .eq('user_id', user.id)
           .order('created_at', { ascending: false });
           

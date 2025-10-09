@@ -15,7 +15,9 @@ const ConsentAnalyzer: React.FC = () => {
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
   const [documentPreview, setDocumentPreview] = useState<string>('');
+  const [analysisTime, setAnalysisTime] = useState(0);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
+  const timerRef = React.useRef<NodeJS.Timeout | null>(null);
 
   const handleFileUpload = () => {
     fileInputRef.current?.click();
@@ -85,13 +87,23 @@ const ConsentAnalyzer: React.FC = () => {
     }
 
     setIsAnalyzing(true);
+    setAnalysisTime(0);
+    
+    // Start timer
+    timerRef.current = setInterval(() => {
+      setAnalysisTime(prev => prev + 0.1);
+    }, 100);
     
     try {
       // Perform actual AI analysis
       const analysisResult = await analyzeConsentDocument(consentText);
       
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
+      
       setIsAnalyzing(false);
-      toast.success('Analysis complete!');
+      toast.success(`Analysis complete in ${analysisTime.toFixed(1)}s!`);
       
       // Navigate to the risk report page with analysis results
       navigate('/report', { 
@@ -102,17 +114,30 @@ const ConsentAnalyzer: React.FC = () => {
       });
     } catch (error) {
       console.error('Analysis failed:', error);
+      if (timerRef.current) {
+        clearInterval(timerRef.current);
+      }
       setIsAnalyzing(false);
       toast.error('Analysis failed. Please try again.');
     }
   };
 
   return (
-    <div className="page-transition">
+    <div className="page-transition relative">
       <div className="mb-6">
         <h1 className="text-3xl font-bold mb-2">Consent Analyzer</h1>
         <p className="text-gray-600">Upload or paste terms and conditions for AI-powered analysis</p>
       </div>
+      
+      {/* Analysis Timer - Bottom Right */}
+      {isAnalyzing && (
+        <div className="fixed bottom-6 right-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in z-50">
+          <div className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
+          <div className="text-sm font-medium">
+            Analyzing: {analysisTime.toFixed(1)}s
+          </div>
+        </div>
+      )}
       
       <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="col-span-1 lg:col-span-2">

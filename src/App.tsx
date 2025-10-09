@@ -41,6 +41,11 @@ const App = () => (
                 <RiskReport />
               </Layout>
             } />
+            <Route path="/report/:id" element={
+              <Layout>
+                <RiskReport />
+              </Layout>
+            } />
             <Route path="/dashboard" element={
               <Layout>
                 <Dashboard />

@@ -20,13 +20,38 @@ serve(async (req) => {
 
     console.log("Starting AI analysis of terms and conditions...");
 
-    const systemPrompt = `You are an expert legal analyst specializing in privacy policies, terms of service, and user agreements. Your task is to:
+    const systemPrompt = `You are an expert legal and privacy analyst with deep expertise in analyzing terms of service, privacy policies, and user agreements. Your analysis must be:
 
-1. Identify the company/service from the terms and conditions
-2. Deeply analyze every clause for privacy risks, data usage, and user rights
-3. Provide actionable safety recommendations
-4. Compare against known safe practices from popular services (WhatsApp, ChatGPT, Google, etc.)
-5. Rate the overall risk and explain your reasoning
+COMPREHENSIVE: Examine every clause, not just surface-level terms
+ACCURATE: Identify the exact company name and service being analyzed
+COMPARATIVE: Compare practices to well-known services (WhatsApp, Signal, ChatGPT, Google, Facebook, etc.)
+ACTIONABLE: Provide specific, practical safety recommendations
+RISK-FOCUSED: Calculate risk scores based on actual privacy and security implications
+
+ANALYSIS REQUIREMENTS:
+
+1. COMPANY IDENTIFICATION:
+   - Extract the exact company/service name from legal notices, headers, or copyright statements
+   - Identify the jurisdiction and legal entity
+
+2. DEEP CLAUSE ANALYSIS:
+   - Examine data collection practices (what data, why, how long)
+   - Analyze data sharing (third parties, affiliates, advertisers)
+   - Review user rights (access, deletion, portability, consent withdrawal)
+   - Check security measures and breach notification policies
+   - Identify jurisdiction-specific compliance (GDPR, CCPA, etc.)
+   - Look for concerning clauses (broad permissions, liability limits, forced arbitration)
+
+3. SAFETY INSIGHTS:
+   - Compare data practices to industry leaders (e.g., "Collects 10x more data than WhatsApp")
+   - Identify unique risks or unusually good practices
+   - Provide specific usage recommendations based on risk level
+   - Include real-world impact examples
+
+4. RISK SCORING (0-100):
+   - 0-30: Low risk (minimal data, strong user rights, transparent practices)
+   - 31-60: Medium risk (moderate data collection, adequate protections)
+   - 61-100: High risk (extensive data collection, weak user rights, unclear terms)
 
 You must return a JSON object with this EXACT structure (no markdown, no extra text):
 {
@@ -75,15 +100,16 @@ Be thorough, specific, and base recommendations on actual legal and privacy best
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-pro",
+        model: "google/gemini-2.5-flash",
         messages: [
           { role: "system", content: systemPrompt },
           { 
             role: "user", 
-            content: `Analyze these terms and conditions thoroughly:\n\n${text}` 
+            content: `Perform a comprehensive, accurate analysis of the following terms and conditions. Be thorough and specific:\n\n${text}` 
           },
         ],
-        temperature: 0.3,
+        temperature: 0.2,
+        max_tokens: 4000,
       }),
     });
 

@@ -168,7 +168,7 @@ const RiskReport: React.FC = () => {
         .from('user_stats')
         .select('*')
         .eq('user_id', user.id)
-        .single();
+        .maybeSingle();
 
       const newTotalAnalyses = (currentStats?.total_analyses || 0) + 1;
       const newHighRiskAnalyses = reportData.riskScore > 70 
@@ -183,12 +183,15 @@ const RiskReport: React.FC = () => {
       const { error: statsError } = await supabase
         .from('user_stats')
         .upsert({
+          id: currentStats?.id,
           user_id: user.id,
           total_analyses: newTotalAnalyses,
           high_risk_analyses: newHighRiskAnalyses,
           average_risk_score: newAvgScore,
           consent_decisions_count: newConsentDecisions,
           last_active: new Date().toISOString()
+        }, {
+          onConflict: 'user_id'
         });
 
       if (statsError) {
