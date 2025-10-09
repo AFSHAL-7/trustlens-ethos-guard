@@ -109,9 +109,15 @@ const RiskReport: React.FC = () => {
           navigate('/dashboard');
         }
       } else if (!location.state?.analysisResult) {
-        // No data available at all
-        toast.error('No analysis data found. Please analyze a document first.');
-        navigate('/analyzer');
+        // No data available - check for last analysis in localStorage
+        const lastAnalysisId = localStorage.getItem('lastAnalysisId');
+        if (lastAnalysisId && user) {
+          // Redirect to the last analysis
+          navigate(`/report/${lastAnalysisId}`, { replace: true });
+        } else {
+          toast.error('No analysis data found. Please analyze a document first.');
+          navigate('/analyzer');
+        }
       }
     };
 
@@ -140,14 +146,21 @@ const RiskReport: React.FC = () => {
         individual_terms_decisions: JSON.stringify(termDecisions || [])
       };
 
-      const { error: insertError } = await supabase
+      const { data: insertedData, error: insertError } = await supabase
         .from('consent_analyses')
-        .insert(analysisData);
+        .insert(analysisData)
+        .select()
+        .single();
 
       if (insertError) {
         console.error('Error saving analysis:', insertError);
         toast.error('Failed to save analysis');
         return;
+      }
+
+      // Store the latest analysis ID in localStorage for persistence
+      if (insertedData) {
+        localStorage.setItem('lastAnalysisId', insertedData.id);
       }
 
       // Update user stats

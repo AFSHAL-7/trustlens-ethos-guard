@@ -21,6 +21,16 @@ const ConsentAnalyzer: React.FC = () => {
     fileInputRef.current?.click();
   };
 
+  const handleClearDocument = () => {
+    setConsentText('');
+    setUploadedFile(null);
+    setDocumentPreview('');
+    if (fileInputRef.current) {
+      fileInputRef.current.value = '';
+    }
+    toast.success('Document cleared');
+  };
+
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -129,13 +139,23 @@ const ConsentAnalyzer: React.FC = () => {
             {/* Document Preview Section */}
             {documentPreview && (
               <div className="mt-4 p-4 border rounded-lg bg-muted/50">
-                <div className="flex items-center gap-2 mb-2">
-                  {uploadedFile?.type.startsWith('image/') ? (
-                    <Image className="h-4 w-4 text-primary" />
-                  ) : (
-                    <File className="h-4 w-4 text-primary" />
-                  )}
-                  <span className="text-sm font-medium">Document Preview</span>
+                <div className="flex items-center justify-between mb-2">
+                  <div className="flex items-center gap-2">
+                    {uploadedFile?.type.startsWith('image/') ? (
+                      <Image className="h-4 w-4 text-primary" />
+                    ) : (
+                      <File className="h-4 w-4 text-primary" />
+                    )}
+                    <span className="text-sm font-medium">Document Preview</span>
+                  </div>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={handleClearDocument}
+                    className="h-8 text-destructive hover:text-destructive"
+                  >
+                    Remove
+                  </Button>
                 </div>
                 {uploadedFile?.type.startsWith('image/') ? (
                   <img 
