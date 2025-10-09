@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs';
 import { Check, AlertTriangle, XCircle, Search, TrendingUp, BarChart3, Target } from 'lucide-react';
@@ -18,21 +18,14 @@ interface ConsentRecord {
 
 const Dashboard: React.FC = () => {
   const location = useLocation();
+  const navigate = useNavigate();
   const { user } = useAuth();
   const { profile, stats, loading, error } = useUserProfile();
   const [consents, setConsents] = useState<ConsentRecord[]>([]);
   
-  // Mock data for the chart
-  const chartData = [
-    { name: 'Jan', allow: 4, partial: 2, deny: 1 },
-    { name: 'Feb', allow: 3, partial: 3, deny: 2 },
-    { name: 'Mar', allow: 2, partial: 4, deny: 3 },
-    { name: 'Apr', allow: 5, partial: 2, deny: 1 },
-    { name: 'May', allow: 3, partial: 1, deny: 4 },
-    { name: 'Jun', allow: 6, partial: 3, deny: 2 },
-  ];
+  const [chartData, setChartData] = useState<Array<{name: string, allow: number, partial: number, deny: number}>>([]);
   
-  // Load real consent analyses from database
+  // Load real consent analyses from database and generate chart data
   useEffect(() => {
     const loadConsentHistory = async () => {
       if (!user) return;
@@ -59,6 +52,29 @@ const Dashboard: React.FC = () => {
           }));
           
           setConsents(consentRecords);
+          
+          // Generate chart data from actual analyses by day (last 7 days)
+          const last7Days = Array.from({ length: 7 }, (_, i) => {
+            const date = new Date();
+            date.setDate(date.getDate() - (6 - i));
+            return date.toISOString().split('T')[0];
+          });
+          
+          const chartDataByDay = last7Days.map(day => {
+            const dayAnalyses = analyses.filter(a => {
+              const analysisDate = new Date(a.created_at || a.analyzed_at || '').toISOString().split('T')[0];
+              return analysisDate === day;
+            });
+            
+            return {
+              name: new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+              allow: dayAnalyses.filter(a => a.consent_decision === 'allow').length,
+              partial: dayAnalyses.filter(a => a.consent_decision === 'partial').length,
+              deny: dayAnalyses.filter(a => a.consent_decision === 'deny').length,
+            };
+          });
+          
+          setChartData(chartDataByDay);
         }
       } catch (error) {
         console.error('Error loading consent history:', error);
@@ -66,6 +82,28 @@ const Dashboard: React.FC = () => {
     };
     
     loadConsentHistory();
+    
+    // Set up real-time subscription for live updates
+    const channel = supabase
+      .channel('consent-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'consent_analyses',
+          filter: `user_id=eq.${user?.id}`
+        },
+        () => {
+          console.log('Real-time update: Consent data changed');
+          loadConsentHistory();
+        }
+      )
+      .subscribe();
+    
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, [user]);
   
   // Add new consent if passed from Risk Report
@@ -110,6 +148,10 @@ const Dashboard: React.FC = () => {
     return consents.filter(consent => consent.action === filterType);
   };
 
+  const handleViewReport = (consentId: string) => {
+    navigate(`/report/${consentId}`);
+  };
+
   const renderConsentList = (filteredConsents: ConsentRecord[]) => {
     if (filteredConsents.length === 0) {
       return (
@@ -126,7 +168,8 @@ const Dashboard: React.FC = () => {
         {filteredConsents.map((consent) => (
           <div 
             key={consent.id}
-            className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors"
+            className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+            onClick={() => handleViewReport(consent.id)}
           >
             <div className="flex items-center">
               <div className="mr-4">

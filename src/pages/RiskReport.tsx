@@ -46,27 +46,77 @@ const RiskReport: React.FC = () => {
   const [saving, setSaving] = useState(false);
   const [showIndividualTerms, setShowIndividualTerms] = useState(false);
   const [individualTermDecisions, setIndividualTermDecisions] = useState<IndividualTermDecision[]>([]);
+  const [reportData, setReportData] = useState<any>(null);
+  const [originalText, setOriginalText] = useState<string>('');
+  const [loading, setLoading] = useState(true);
 
-  // Get analysis results from location state
-  const analysisResult = location.state?.analysisResult;
-  const originalText = location.state?.originalText;
+  // Extract analysisId from URL path (e.g., /report/uuid)
+  const pathParts = location.pathname.split('/');
+  const analysisId = pathParts[pathParts.length - 1];
+  const isViewingExisting = analysisId && analysisId !== 'report';
 
-  // Use analysis results or fall back to defaults for missing data
-  const reportData = analysisResult || {
-    documentTitle: "Untitled Document",
-    riskScore: 0,
-    riskItems: [],
-    summaryData: [],
-    individualTerms: []
-  };
-
-  // Redirect to analyzer if no data
+  // Load analysis data - either from location state (new analysis) or from database (existing)
   useEffect(() => {
-    if (!analysisResult && !originalText) {
-      toast.error('No analysis data found. Please analyze a document first.');
-      navigate('/analyzer');
-    }
-  }, [analysisResult, originalText, navigate]);
+    const loadAnalysisData = async () => {
+      // First check if we have fresh data from location state (new analysis)
+      if (location.state?.analysisResult) {
+        setReportData(location.state.analysisResult);
+        setOriginalText(location.state.originalText || '');
+        setLoading(false);
+        return;
+      }
+
+      // If viewing an existing analysis by ID, load from database
+      if (isViewingExisting && user) {
+        try {
+          const { data, error } = await supabase
+            .from('consent_analyses')
+            .select('*')
+            .eq('id', analysisId)
+            .eq('user_id', user.id)
+            .single();
+
+          if (error) {
+            console.error('Error loading analysis:', error);
+            toast.error('Could not load analysis report');
+            navigate('/dashboard');
+            return;
+          }
+
+          if (data) {
+            // Reconstruct the report data from database
+            const riskItemsStr = typeof data.risk_items === 'string' ? data.risk_items : JSON.stringify(data.risk_items || []);
+            const summarySectionsStr = typeof data.summary_sections === 'string' ? data.summary_sections : JSON.stringify(data.summary_sections || []);
+            
+            const loadedReportData = {
+              documentTitle: data.document_title,
+              riskScore: data.risk_score,
+              riskItems: JSON.parse(riskItemsStr),
+              summaryData: JSON.parse(summarySectionsStr),
+              individualTerms: [],
+              companyName: data.document_title.split(' ')[0], // Extract from title
+              safetyInsights: JSON.parse(summarySectionsStr)[0]?.content || ''
+            };
+            
+            setReportData(loadedReportData);
+            setOriginalText(data.original_text || '');
+            setConsentDecision(data.consent_decision as 'allow' | 'partial' | 'deny' | null);
+            setLoading(false);
+          }
+        } catch (error) {
+          console.error('Error loading analysis:', error);
+          toast.error('Failed to load analysis');
+          navigate('/dashboard');
+        }
+      } else if (!location.state?.analysisResult) {
+        // No data available at all
+        toast.error('No analysis data found. Please analyze a document first.');
+        navigate('/analyzer');
+      }
+    };
+
+    loadAnalysisData();
+  }, [analysisId, isViewingExisting, user, location.state, navigate]);
 
   const handleSaveDecision = async (decision: 'allow' | 'partial' | 'deny', termDecisions?: IndividualTermDecision[]) => {
     if (!user) {
@@ -163,6 +213,21 @@ const RiskReport: React.FC = () => {
   const handlePartialConsent = () => {
     setShowIndividualTerms(true);
   };
+
+  if (loading) {
+    return (
+      <div className="page-transition min-h-screen bg-background flex items-center justify-center">
+        <div className="text-center">
+          <div className="h-12 w-12 border-4 border-primary border-t-transparent rounded-full animate-spin mx-auto mb-4"></div>
+          <p className="text-muted-foreground">Loading analysis report...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!reportData) {
+    return null;
+  }
 
   return (
     <div className="page-transition min-h-screen bg-background">
