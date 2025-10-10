@@ -106,16 +106,47 @@ function validateTermsAndConditions(text: string): { isValid: boolean; message?:
 }
 
 export const analyzeConsentDocument = async (text: string): Promise<AnalysisResult> => {
-  // Validate that the content is actually terms and conditions
-  const validation = validateTermsAndConditions(text);
-  if (!validation.isValid) {
-    throw new Error(validation.message);
+  // Check if this is image or document data
+  const isImageData = text.startsWith('IMAGE_DATA:');
+  const isPdfData = text.startsWith('PDF_DATA:');
+  const isDocData = text.startsWith('DOC_DATA:');
+  
+  if (!isImageData && !isPdfData && !isDocData) {
+    // Validate that the content is actually terms and conditions
+    const validation = validateTermsAndConditions(text);
+    if (!validation.isValid) {
+      throw new Error(validation.message);
+    }
   }
 
   try {
+    // Prepare the request body
+    let body: any;
+    
+    if (isImageData) {
+      // Extract base64 image data
+      const imageData = text.substring('IMAGE_DATA:'.length);
+      body = { imageData, type: 'image' };
+    } else if (isPdfData) {
+      // Extract PDF data and filename
+      const parts = text.substring('PDF_DATA:'.length).split(':');
+      const pdfData = parts[0];
+      const fileName = parts[1] || 'document.pdf';
+      body = { pdfData, fileName, type: 'pdf' };
+    } else if (isDocData) {
+      // Extract document data and filename
+      const parts = text.substring('DOC_DATA:'.length).split(':');
+      const docData = parts[0];
+      const fileName = parts[1] || 'document';
+      body = { docData, fileName, type: 'document' };
+    } else {
+      // Regular text
+      body = { text };
+    }
+
     // Call the AI-powered analysis edge function
     const { data, error } = await supabase.functions.invoke('analyze-consent', {
-      body: { text }
+      body
     });
 
     if (error) {
@@ -131,7 +162,12 @@ export const analyzeConsentDocument = async (text: string): Promise<AnalysisResu
   } catch (error) {
     console.error("Analysis error:", error);
     
-    // Fallback to basic analysis if AI fails
+    // For images and documents, we can't do fallback analysis
+    if (text.startsWith('IMAGE_DATA:') || text.startsWith('PDF_DATA:') || text.startsWith('DOC_DATA:')) {
+      throw error;
+    }
+    
+    // Fallback to basic analysis if AI fails for text
     console.warn("Falling back to basic analysis");
     const documentTitle = extractDocumentTitle(text) || "Terms of Service Document";
     const riskItems = analyzeRiskItems(text);

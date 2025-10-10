@@ -11,7 +11,8 @@ serve(async (req) => {
   }
 
   try {
-    const { text } = await req.json();
+    const body = await req.json();
+    const { text, imageData, pdfData, docData, fileName, type } = body;
     const LOVABLE_API_KEY = Deno.env.get("LOVABLE_API_KEY");
     
     if (!LOVABLE_API_KEY) {
@@ -19,6 +20,63 @@ serve(async (req) => {
     }
 
     console.log("Starting AI analysis of terms and conditions...");
+    
+    let documentText = text;
+    
+    // Handle image data - use vision model to extract text
+    if (type === 'image' && imageData) {
+      console.log("Processing image document with OCR...");
+      const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
+        method: 'POST',
+        headers: {
+          'Authorization': `Bearer ${LOVABLE_API_KEY}`,
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          model: 'google/gemini-2.5-flash',
+          messages: [
+            {
+              role: 'user',
+              content: [
+                {
+                  type: 'text',
+                  text: 'Extract ALL text from this image document. This appears to be a Terms and Conditions, Privacy Policy, or similar legal document. Extract every single word, sentence, clause, and section. Maintain the original structure, formatting, headings, and order. Include ALL content visible in the image - titles, sections, numbered clauses, bullet points, fine print, everything. Be thorough and comprehensive.'
+                },
+                {
+                  type: 'image_url',
+                  image_url: {
+                    url: imageData
+                  }
+                }
+              ]
+            }
+          ],
+          temperature: 0.1,
+          max_tokens: 8000
+        })
+      });
+
+      if (!ocrResponse.ok) {
+        const errorText = await ocrResponse.text();
+        console.error('OCR error:', errorText);
+        throw new Error('Failed to extract text from image. Please ensure the image is clear and readable.');
+      }
+
+      const ocrData = await ocrResponse.json();
+      documentText = ocrData.choices[0]?.message?.content || '';
+      
+      if (!documentText || documentText.length < 50) {
+        throw new Error('Could not extract readable text from the image. Please ensure the image is clear, well-lit, and contains Terms & Conditions or Privacy Policy text.');
+      }
+      
+      console.log(`Extracted ${documentText.length} characters from image`);
+    }
+    
+    // Handle PDF/DOC data - for now, inform user
+    if ((type === 'pdf' || type === 'document') && (pdfData || docData)) {
+      console.log(`PDF/DOCX support: ${type} document ${fileName}`);
+      throw new Error(`PDF and Word document analysis is coming soon. For now, please either:\n1. Copy and paste the text from the document, or\n2. Take a screenshot/photo of each page and upload as images`);
+    }
     
     // First, validate if this is actually a T&C or privacy policy document
     const validationPrompt = `You are a document classifier. Analyze the following text and determine if it is a Terms and Conditions, Privacy Policy, Terms of Service, User Agreement, End User License Agreement (EULA), or similar legal document.
@@ -32,7 +90,7 @@ Respond with ONLY a JSON object in this exact format:
 }
 
 Text to classify:
-${text.substring(0, 2000)}`;
+${documentText.substring(0, 2000)}`;
 
     const validationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -216,9 +274,9 @@ Be thorough, specific, and base recommendations on actual legal and privacy best
             content: `Analyze this legal document using the DETERMINISTIC SCORING FORMULA provided. Calculate the risk score by objectively counting and measuring each factor. If you see this exact text again, you must return the exact same score.
 
 Document to analyze:
-${text}
+${documentText}
 
-Remember: Use the objective scoring criteria. Same document = same score.` 
+Remember: Use the objective scoring criteria. Same document = same score.`
           },
         ],
         temperature: 0.1,

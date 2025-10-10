@@ -48,30 +48,52 @@ const ConsentAnalyzer: React.FC = () => {
             if (event.target?.result) {
               const content = event.target.result as string;
               setConsentText(content);
-              setDocumentPreview(content.substring(0, 500) + '...');
+              setDocumentPreview(content.substring(0, 500) + (content.length > 500 ? '...' : ''));
               setIsUploading(false);
-              toast.success(`File "${file.name}" uploaded successfully`);
+              toast.success(`File "${file.name}" uploaded and ready for analysis`);
             }
           };
           reader.readAsText(file);
         } else if (file.type.startsWith('image/')) {
-          // Image files - show preview
+          // Image files - store as base64 for AI vision analysis
           const reader = new FileReader();
           reader.onload = (event) => {
             if (event.target?.result) {
-              setDocumentPreview(event.target.result as string);
-              setConsentText(`[Image uploaded: ${file.name}]`);
+              const base64Data = event.target.result as string;
+              setDocumentPreview(base64Data);
+              // Store the base64 data with a marker for the analysis service
+              setConsentText(`IMAGE_DATA:${base64Data}`);
               setIsUploading(false);
-              toast.success(`Image "${file.name}" uploaded successfully`);
+              toast.success(`Image "${file.name}" uploaded - will be analyzed using OCR`);
+            }
+          };
+          reader.readAsDataURL(file);
+        } else if (file.type === 'application/pdf' || file.name.endsWith('.pdf')) {
+          // PDF files - will be processed by backend
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            if (event.target?.result) {
+              const base64Data = (event.target.result as string).split(',')[1];
+              setDocumentPreview(`PDF Document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+              setConsentText(`PDF_DATA:${base64Data}:${file.name}`);
+              setIsUploading(false);
+              toast.success(`PDF "${file.name}" uploaded - will extract text for analysis`);
             }
           };
           reader.readAsDataURL(file);
         } else {
-          // Other file types (PDF, DOCX, etc.) - show file info
-          setDocumentPreview(`Document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-          setConsentText(`[Document uploaded: ${file.name}]`);
-          setIsUploading(false);
-          toast.success(`Document "${file.name}" uploaded successfully`);
+          // Other file types
+          const reader = new FileReader();
+          reader.onload = async (event) => {
+            if (event.target?.result) {
+              const base64Data = (event.target.result as string).split(',')[1];
+              setDocumentPreview(`Document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
+              setConsentText(`DOC_DATA:${base64Data}:${file.name}`);
+              setIsUploading(false);
+              toast.success(`Document "${file.name}" uploaded - will extract text for analysis`);
+            }
+          };
+          reader.readAsDataURL(file);
         }
       } catch (error) {
         setIsUploading(false);
