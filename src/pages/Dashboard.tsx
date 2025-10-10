@@ -180,6 +180,37 @@ const Dashboard: React.FC = () => {
         consent.id === consentId ? { ...consent, action: newDecision } : consent
       ));
 
+      // Reload chart data to reflect the change
+      const { data: analyses, error: fetchError } = await supabase
+        .from('consent_analyses')
+        .select('id, document_title, consent_decision, risk_score, created_at, analyzed_at')
+        .eq('user_id', user?.id)
+        .order('created_at', { ascending: false });
+        
+      if (!fetchError && analyses) {
+        const last7Days = Array.from({ length: 7 }, (_, i) => {
+          const date = new Date();
+          date.setDate(date.getDate() - (6 - i));
+          return date.toISOString().split('T')[0];
+        });
+        
+        const chartDataByDay = last7Days.map(day => {
+          const dayAnalyses = analyses.filter(a => {
+            const analysisDate = new Date(a.created_at || a.analyzed_at || '').toISOString().split('T')[0];
+            return analysisDate === day;
+          });
+          
+          return {
+            name: new Date(day).toLocaleDateString('en-US', { month: 'short', day: 'numeric' }),
+            allow: dayAnalyses.filter(a => a.consent_decision === 'allow').length,
+            partial: dayAnalyses.filter(a => a.consent_decision === 'partial').length,
+            deny: dayAnalyses.filter(a => a.consent_decision === 'deny').length,
+          };
+        });
+        
+        setChartData(chartDataByDay);
+      }
+
       toast.success('Consent decision updated successfully');
     } catch (error) {
       console.error('Error updating decision:', error);

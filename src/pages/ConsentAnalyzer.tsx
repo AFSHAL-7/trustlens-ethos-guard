@@ -87,23 +87,28 @@ const ConsentAnalyzer: React.FC = () => {
     }
 
     setIsAnalyzing(true);
-    setAnalysisTime(0);
+    const estimatedTime = 25; // Estimate 25 seconds for analysis
+    setAnalysisTime(estimatedTime);
     
-    // Start timer
+    // Start countdown timer
     timerRef.current = setInterval(() => {
-      setAnalysisTime(prev => prev + 0.1);
+      setAnalysisTime(prev => Math.max(0, prev - 0.1));
     }, 100);
+    
+    const startTime = Date.now();
     
     try {
       // Perform actual AI analysis
       const analysisResult = await analyzeConsentDocument(consentText);
+      
+      const actualTime = ((Date.now() - startTime) / 1000);
       
       if (timerRef.current) {
         clearInterval(timerRef.current);
       }
       
       setIsAnalyzing(false);
-      toast.success(`Analysis complete in ${analysisTime.toFixed(1)}s!`);
+      toast.success(`Analysis complete in ${actualTime.toFixed(1)}s!`);
       
       // Navigate to the risk report page with analysis results
       navigate('/report', { 
@@ -118,7 +123,10 @@ const ConsentAnalyzer: React.FC = () => {
         clearInterval(timerRef.current);
       }
       setIsAnalyzing(false);
-      toast.error('Analysis failed. Please try again.');
+      
+      // Check if error message indicates non-T&C document
+      const errorMessage = error instanceof Error ? error.message : 'Analysis failed. Please try again.';
+      toast.error(errorMessage);
     }
   };
 
@@ -134,7 +142,7 @@ const ConsentAnalyzer: React.FC = () => {
         <div className="fixed bottom-6 right-6 bg-primary text-primary-foreground px-6 py-3 rounded-lg shadow-lg flex items-center gap-3 animate-fade-in z-50">
           <div className="h-5 w-5 border-2 border-primary-foreground border-t-transparent rounded-full animate-spin"></div>
           <div className="text-sm font-medium">
-            Analyzing: {analysisTime.toFixed(1)}s
+            {analysisTime > 0 ? `Time remaining: ~${analysisTime.toFixed(1)}s` : 'Finalizing...'}
           </div>
         </div>
       )}
