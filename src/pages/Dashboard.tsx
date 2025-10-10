@@ -7,6 +7,14 @@ import { LineChart, Line, XAxis, YAxis, CartesianGrid, Tooltip, Legend, Responsi
 import { useAuth } from '@/contexts/AuthContext';
 import { useUserProfile } from '@/hooks/useUserProfile';
 import { supabase } from '@/integrations/supabase/client';
+import { Button } from '@/components/ui/button';
+import { toast } from 'sonner';
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu';
 
 interface ConsentRecord {
   id: string;
@@ -148,8 +156,35 @@ const Dashboard: React.FC = () => {
     return consents.filter(consent => consent.action === filterType);
   };
 
-  const handleViewReport = (consentId: string) => {
+  const handleViewReport = (consentId: string, event?: React.MouseEvent) => {
+    if (event) {
+      event.stopPropagation();
+    }
     navigate(`/report/${consentId}`);
+  };
+
+  const handleDecisionChange = async (consentId: string, newDecision: 'allow' | 'partial' | 'deny', event: React.MouseEvent) => {
+    event.stopPropagation();
+    
+    try {
+      const { error } = await supabase
+        .from('consent_analyses')
+        .update({ consent_decision: newDecision })
+        .eq('id', consentId)
+        .eq('user_id', user?.id);
+
+      if (error) throw error;
+
+      // Update local state
+      setConsents(prev => prev.map(consent => 
+        consent.id === consentId ? { ...consent, action: newDecision } : consent
+      ));
+
+      toast.success('Consent decision updated successfully');
+    } catch (error) {
+      console.error('Error updating decision:', error);
+      toast.error('Failed to update consent decision');
+    }
   };
 
   const renderConsentList = (filteredConsents: ConsentRecord[]) => {
@@ -168,30 +203,56 @@ const Dashboard: React.FC = () => {
         {filteredConsents.map((consent) => (
           <div 
             key={consent.id}
-            className="flex items-center justify-between p-4 rounded-xl border border-gray-100 hover:bg-gray-50 transition-colors cursor-pointer"
+            className="flex items-center justify-between p-4 rounded-xl border hover:shadow-md transition-all cursor-pointer bg-card"
             onClick={() => handleViewReport(consent.id)}
           >
-            <div className="flex items-center">
-              <div className="mr-4">
+            <div className="flex items-center gap-4 flex-1">
+              <div>
                 {getActionIcon(consent.action)}
               </div>
-              <div>
-                <h3 className="font-medium">{consent.title}</h3>
-                <p className="text-sm text-gray-500">{formatDate(consent.timestamp)}</p>
+              <div className="flex-1">
+                <h3 className="font-medium text-foreground">{consent.title}</h3>
+                <p className="text-sm text-muted-foreground">{formatDate(consent.timestamp)}</p>
               </div>
             </div>
-            <div className="text-right">
-              <div 
-                className={`inline-block text-sm font-medium px-2 py-1 rounded-full ${
-                  consent.riskScore > 80
-                    ? 'bg-red-100 text-red-700'
-                    : consent.riskScore > 60
-                      ? 'bg-orange-100 text-orange-700'
-                      : 'bg-green-100 text-green-700'
-                }`}
-              >
-                Risk Score: {consent.riskScore}%
+            
+            <div className="flex items-center gap-3">
+              <div className="text-sm font-medium text-foreground px-3 py-1 rounded-md bg-muted">
+                Risk: {consent.riskScore}%
               </div>
+              
+              <DropdownMenu>
+                <DropdownMenuTrigger asChild onClick={(e) => e.stopPropagation()}>
+                  <Button variant="outline" size="sm" className="gap-2">
+                    {consent.action === 'allow' && 'Allow All'}
+                    {consent.action === 'partial' && 'Partial Allow'}
+                    {consent.action === 'deny' && 'Fully Reject'}
+                  </Button>
+                </DropdownMenuTrigger>
+                <DropdownMenuContent align="end">
+                  <DropdownMenuItem 
+                    onClick={(e) => handleDecisionChange(consent.id, 'allow', e)}
+                    className="gap-2"
+                  >
+                    <Check className="h-4 w-4 text-trustlens-green" />
+                    Allow All
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => handleDecisionChange(consent.id, 'partial', e)}
+                    className="gap-2"
+                  >
+                    <AlertTriangle className="h-4 w-4 text-orange-500" />
+                    Partial Allow
+                  </DropdownMenuItem>
+                  <DropdownMenuItem 
+                    onClick={(e) => handleDecisionChange(consent.id, 'deny', e)}
+                    className="gap-2"
+                  >
+                    <XCircle className="h-4 w-4 text-red-500" />
+                    Fully Reject
+                  </DropdownMenuItem>
+                </DropdownMenuContent>
+              </DropdownMenu>
             </div>
           </div>
         ))}
