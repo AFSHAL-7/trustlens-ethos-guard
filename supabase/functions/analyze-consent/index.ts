@@ -80,8 +80,8 @@ serve(async (req) => {
     
     // Step 1: Create document hash for consistency and detect language
     const encoder = new TextEncoder();
-    const data = encoder.encode(documentText.trim().toLowerCase().substring(0, 5000));
-    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const encodedData = encoder.encode(documentText.trim().toLowerCase().substring(0, 5000));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', encodedData);
     const hashArray = Array.from(new Uint8Array(hashBuffer));
     const documentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
     console.log("Document hash for consistency:", documentHash);
