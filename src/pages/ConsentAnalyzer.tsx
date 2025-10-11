@@ -14,6 +14,7 @@ const ConsentAnalyzer: React.FC = () => {
   const [isUploading, setIsUploading] = useState(false);
   const [isAnalyzing, setIsAnalyzing] = useState(false);
   const [uploadedFile, setUploadedFile] = useState<File | null>(null);
+  const [uploadedFileData, setUploadedFileData] = useState<string>('');
   const [documentPreview, setDocumentPreview] = useState<string>('');
   const [analysisTime, setAnalysisTime] = useState(0);
   const fileInputRef = React.useRef<HTMLInputElement>(null);
@@ -24,8 +25,8 @@ const ConsentAnalyzer: React.FC = () => {
   };
 
   const handleClearDocument = () => {
-    setConsentText('');
     setUploadedFile(null);
+    setUploadedFileData('');
     setDocumentPreview('');
     if (fileInputRef.current) {
       fileInputRef.current.value = '';
@@ -47,7 +48,7 @@ const ConsentAnalyzer: React.FC = () => {
           reader.onload = (event) => {
             if (event.target?.result) {
               const content = event.target.result as string;
-              setConsentText(content);
+              setUploadedFileData(`TEXT_DATA:${content}`);
               setDocumentPreview(content.substring(0, 500) + (content.length > 500 ? '...' : ''));
               setIsUploading(false);
               toast.success(`File "${file.name}" uploaded and ready for analysis`);
@@ -61,8 +62,7 @@ const ConsentAnalyzer: React.FC = () => {
             if (event.target?.result) {
               const base64Data = event.target.result as string;
               setDocumentPreview(base64Data);
-              // Store the base64 data with a marker for the analysis service
-              setConsentText(`IMAGE_DATA:${base64Data}`);
+              setUploadedFileData(`IMAGE_DATA:${base64Data}`);
               setIsUploading(false);
               toast.success(`Image "${file.name}" uploaded - will be analyzed using OCR`);
             }
@@ -75,7 +75,7 @@ const ConsentAnalyzer: React.FC = () => {
             if (event.target?.result) {
               const base64Data = (event.target.result as string).split(',')[1];
               setDocumentPreview(`PDF Document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-              setConsentText(`PDF_DATA:${base64Data}:${file.name}`);
+              setUploadedFileData(`PDF_DATA:${base64Data}:${file.name}`);
               setIsUploading(false);
               toast.success(`PDF "${file.name}" uploaded - will extract text for analysis`);
             }
@@ -88,7 +88,7 @@ const ConsentAnalyzer: React.FC = () => {
             if (event.target?.result) {
               const base64Data = (event.target.result as string).split(',')[1];
               setDocumentPreview(`Document: ${file.name} (${(file.size / 1024 / 1024).toFixed(2)} MB)`);
-              setConsentText(`DOC_DATA:${base64Data}:${file.name}`);
+              setUploadedFileData(`DOC_DATA:${base64Data}:${file.name}`);
               setIsUploading(false);
               toast.success(`Document "${file.name}" uploaded - will extract text for analysis`);
             }
@@ -103,7 +103,11 @@ const ConsentAnalyzer: React.FC = () => {
   };
 
   const handleAnalyze = async () => {
-    if (!consentText.trim()) {
+    // Check if user has either uploaded a file or entered text
+    const hasUploadedFile = uploadedFileData.trim();
+    const hasTextInput = consentText.trim();
+    
+    if (!hasUploadedFile && !hasTextInput) {
       toast.error('Please enter or upload consent text to analyze');
       return;
     }
@@ -120,8 +124,11 @@ const ConsentAnalyzer: React.FC = () => {
     const startTime = Date.now();
     
     try {
+      // Use uploaded file data if available, otherwise use text input
+      const dataToAnalyze = hasUploadedFile ? uploadedFileData : consentText;
+      
       // Perform actual AI analysis
-      const analysisResult = await analyzeConsentDocument(consentText);
+      const analysisResult = await analyzeConsentDocument(dataToAnalyze);
       
       const actualTime = ((Date.now() - startTime) / 1000);
       
@@ -136,7 +143,7 @@ const ConsentAnalyzer: React.FC = () => {
       navigate('/report', { 
         state: { 
           analysisResult,
-          originalText: consentText
+          originalText: dataToAnalyze
         } 
       });
     } catch (error) {
@@ -248,7 +255,7 @@ const ConsentAnalyzer: React.FC = () => {
             
             <Button
               onClick={handleAnalyze}
-              disabled={isUploading || isAnalyzing || !consentText.trim()}
+              disabled={isUploading || isAnalyzing || (!consentText.trim() && !uploadedFileData.trim())}
               className="flex items-center gap-2 bg-trustlens-blue hover:bg-blue-600"
             >
               {isAnalyzing ? (
