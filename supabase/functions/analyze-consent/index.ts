@@ -23,9 +23,9 @@ serve(async (req) => {
     
     let documentText = text;
     
-    // Handle image data - use vision model to extract text
+    // Handle image data - use vision model to extract text (multi-language support)
     if (type === 'image' && imageData) {
-      console.log("Processing image document with OCR...");
+      console.log("Processing image document with multi-language OCR...");
       const ocrResponse = await fetch('https://ai.gateway.lovable.dev/v1/chat/completions', {
         method: 'POST',
         headers: {
@@ -33,14 +33,14 @@ serve(async (req) => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          model: 'google/gemini-2.5-flash',
+          model: 'google/gemini-2.5-pro',
           messages: [
             {
               role: 'user',
               content: [
                 {
                   type: 'text',
-                  text: 'Extract ALL text from this image document. This appears to be a Terms and Conditions, Privacy Policy, or similar legal document. Extract every single word, sentence, clause, and section. Maintain the original structure, formatting, headings, and order. Include ALL content visible in the image - titles, sections, numbered clauses, bullet points, fine print, everything. Be thorough and comprehensive.'
+                  text: 'Extract ALL text from this image in its ORIGINAL LANGUAGE (English, Tamil, Hindi, Russian, Japanese, Chinese, Arabic, or any other language). This is a legal document (Terms and Conditions, Privacy Policy, etc.). Extract every single word, sentence, clause, and section line by line. Maintain the exact original structure, formatting, headings, and order. Include ALL content visible - titles, sections, numbered clauses, bullet points, fine print, everything. Do NOT translate - keep the original language. Be thorough and comprehensive, analyze page by page if multiple pages.'
                 },
                 {
                   type: 'image_url',
@@ -51,8 +51,8 @@ serve(async (req) => {
               ]
             }
           ],
-          temperature: 0.1,
-          max_tokens: 8000
+          temperature: 0.05,
+          max_tokens: 12000
         })
       });
 
@@ -66,7 +66,7 @@ serve(async (req) => {
       documentText = ocrData.choices[0]?.message?.content || '';
       
       if (!documentText || documentText.length < 50) {
-        throw new Error('Could not extract readable text from the image. Please ensure the image is clear, well-lit, and contains Terms & Conditions or Privacy Policy text.');
+        throw new Error('Could not extract readable text from the image. Please ensure the image is clear, well-lit, and contains Terms & Conditions or Privacy Policy text in any language.');
       }
       
       console.log(`Extracted ${documentText.length} characters from image`);
@@ -78,19 +78,30 @@ serve(async (req) => {
       throw new Error(`PDF and Word document analysis is coming soon. For now, please either:\n1. Copy and paste the text from the document, or\n2. Take a screenshot/photo of each page and upload as images`);
     }
     
-    // First, validate if this is actually a T&C or privacy policy document
-    const validationPrompt = `You are a document classifier. Analyze the following text and determine if it is a Terms and Conditions, Privacy Policy, Terms of Service, User Agreement, End User License Agreement (EULA), or similar legal document.
+    // Step 1: Create document hash for consistency and detect language
+    const encoder = new TextEncoder();
+    const data = encoder.encode(documentText.trim().toLowerCase().substring(0, 5000));
+    const hashBuffer = await crypto.subtle.digest('SHA-256', data);
+    const hashArray = Array.from(new Uint8Array(hashBuffer));
+    const documentHash = hashArray.map(b => b.toString(16).padStart(2, '0')).join('').substring(0, 32);
+    console.log("Document hash for consistency:", documentHash);
+
+    // Step 2: Validate if this is a legal document and detect language
+    const validationPrompt = `You are a multilingual document classifier with NLP expertise. Analyze the following text in ANY language (English, Tamil, Hindi, Russian, Japanese, Chinese, Arabic, Spanish, etc.) and determine:
+1. Is it a Terms and Conditions, Privacy Policy, Terms of Service, User Agreement, EULA, or similar legal document?
+2. What language is it written in?
 
 Respond with ONLY a JSON object in this exact format:
 {
   "isLegalDocument": boolean,
   "documentType": "terms_of_service" | "privacy_policy" | "user_agreement" | "eula" | "other" | "not_legal",
   "confidence": number (0-100),
+  "detectedLanguage": "language name (e.g., English, Tamil, Hindi, Russian, Japanese)",
   "reason": "string explaining why"
 }
 
 Text to classify:
-${documentText.substring(0, 2000)}`;
+${documentText.substring(0, 3000)}`;
 
     const validationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -99,14 +110,17 @@ ${documentText.substring(0, 2000)}`;
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "user", content: validationPrompt }
         ],
-        temperature: 0.1,
+        temperature: 0.05,
         max_tokens: 500,
       }),
     });
+
+    let detectedLanguage = 'English';
+    let documentType = 'terms_of_service';
 
     if (validationResponse.ok) {
       const validationData = await validationResponse.json();
@@ -116,13 +130,18 @@ ${documentText.substring(0, 2000)}`;
         try {
           const cleanValidation = validationContent.replace(/```json\n?/g, '').replace(/```\n?/g, '').trim();
           const validation = JSON.parse(cleanValidation);
+          detectedLanguage = validation.detectedLanguage || 'English';
+          documentType = validation.documentType || 'terms_of_service';
+          
+          console.log("Document validated:", validation.documentType, "Language:", detectedLanguage, "Confidence:", validation.confidence);
           
           if (!validation.isLegalDocument || validation.documentType === "not_legal" || validation.confidence < 60) {
             console.log("Document validation failed:", validation);
             return new Response(
               JSON.stringify({ 
                 error: "This document does not appear to contain Terms & Conditions or a Privacy Policy. Please provide a valid legal document for analysis.",
-                validationInfo: validation
+                validationInfo: validation,
+                detectedLanguage: detectedLanguage
               }),
               { 
                 status: 400, 
@@ -130,21 +149,23 @@ ${documentText.substring(0, 2000)}`;
               }
             );
           }
-          console.log("Document validated as legal document:", validation.documentType);
         } catch (e) {
           console.warn("Could not parse validation response, proceeding with analysis");
         }
       }
     }
 
-    const systemPrompt = `You are an expert legal and privacy analyst with deep expertise in analyzing terms of service, privacy policies, and user agreements. Your analysis must be CONSISTENT, ACCURATE, and DETERMINISTIC:
+    const systemPrompt = `You are an expert MULTILINGUAL legal and privacy analyst with advanced NLP capabilities. You can analyze legal documents in ANY language including English, Tamil, Hindi, Russian, Japanese, Chinese, Arabic, Spanish, French, German, Korean, and more. Your analysis must be CONSISTENT, ACCURATE, and DETERMINISTIC:
 
-COMPREHENSIVE: Examine every clause, not just surface-level terms
+MULTILINGUAL: Analyze documents in their ORIGINAL language - do NOT translate
+NLP-POWERED: Use advanced natural language processing to understand context, implications, and hidden risks
+COMPREHENSIVE: Examine every clause line by line, not just surface-level terms
 ACCURATE: Identify the exact company name and service being analyzed
 COMPARATIVE: Compare practices to well-known services (WhatsApp, Signal, ChatGPT, Google, Facebook, etc.)
-ACTIONABLE: Provide specific, practical safety recommendations
-DETERMINISTIC: Same document must always produce the same risk score
+ACTIONABLE: Provide specific, practical safety recommendations in the SAME language
+DETERMINISTIC: Same document must always produce the same risk score (use document hash: ${documentHash})
 CONSISTENT: Use objective scoring criteria, not subjective interpretation
+LEARNING: Previous analyses inform consistency - same T&C = same results
 
 CRITICAL CONSISTENCY RULE:
 If you analyze the EXACT SAME document text again, you MUST return the EXACT SAME risk score. Base your score on objective, measurable criteria only.
@@ -217,7 +238,15 @@ ANALYSIS REQUIREMENTS:
    - Reference specific practices of WhatsApp, Signal, Apple, etc.
 
 4. DOCUMENT FINGERPRINTING:
-   Create a consistent hash of the document's key terms to ensure the same document always gets the same score
+   Document Hash: ${documentHash}
+   Use this hash to ensure identical documents get identical scores
+   
+5. MULTILINGUAL NLP ANALYSIS:
+   - Analyze in the original language (${detectedLanguage})
+   - Use semantic understanding for context and implications
+   - Identify culturally-specific legal patterns
+   - Apply jurisdiction-appropriate legal standards
+   - Return all findings in the ORIGINAL language
 
 You must return a JSON object with this EXACT structure (no markdown, no extra text):
 {
@@ -266,21 +295,29 @@ Be thorough, specific, and base recommendations on actual legal and privacy best
         "Content-Type": "application/json",
       },
       body: JSON.stringify({
-        model: "google/gemini-2.5-flash",
+        model: "google/gemini-2.5-pro",
         messages: [
           { role: "system", content: systemPrompt },
           { 
             role: "user", 
-            content: `Analyze this legal document using the DETERMINISTIC SCORING FORMULA provided. Calculate the risk score by objectively counting and measuring each factor. If you see this exact text again, you must return the exact same score.
+            content: `Analyze this ${documentType} document in ${detectedLanguage} using advanced NLP and the DETERMINISTIC SCORING FORMULA. 
+
+CRITICAL INSTRUCTIONS:
+- Analyze line by line thoroughly - read EVERY clause
+- Calculate the risk score objectively using the formula
+- Document Hash: ${documentHash} - Use this for consistency
+- Return analysis in ${detectedLanguage} (the original language)
+- If you analyze this EXACT document again, return the EXACT SAME score
+- Use NLP to understand context, implications, and hidden risks
 
 Document to analyze:
 ${documentText}
 
-Remember: Use the objective scoring criteria. Same document = same score.`
+Remember: Thorough line-by-line analysis. Same document hash = same score. Analysis in ${detectedLanguage}.`
           },
         ],
-        temperature: 0.1,
-        max_tokens: 5000,
+        temperature: 0.05,
+        max_tokens: 8000,
       }),
     });
 
