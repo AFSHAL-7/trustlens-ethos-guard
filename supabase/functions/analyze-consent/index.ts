@@ -87,21 +87,30 @@ serve(async (req) => {
     console.log("Document hash for consistency:", documentHash);
 
     // Step 2: Validate if this is a legal document and detect language
-    const validationPrompt = `You are a multilingual document classifier with NLP expertise. Analyze the following text in ANY language (English, Tamil, Hindi, Russian, Japanese, Chinese, Arabic, Spanish, etc.) and determine:
-1. Is it a Terms and Conditions, Privacy Policy, Terms of Service, User Agreement, EULA, or similar legal document?
+    const validationPrompt = `You are a multilingual document classifier with expert NLP capabilities in ALL world languages including English, Tamil, Hindi, Telugu, Malayalam, Kannada, Bengali, Marathi, Gujarati, Punjabi, Urdu, Russian, Japanese, Chinese, Arabic, Korean, Spanish, French, German, and more.
+
+CRITICAL INSTRUCTIONS:
+- Accept and validate legal documents in ANY language
+- Be LENIENT with non-English documents - they are just as valid as English ones
+- Legal documents include: Terms and Conditions, Privacy Policy, Terms of Service, User Agreement, EULA, End User License Agreement, Terms of Use, etc.
+- Even if the document structure is different from Western legal documents, if it contains legal terms, policies, or conditions, mark it as a legal document
+- Give HIGH confidence (70-95) if you see legal terminology, numbered clauses, sections, policy statements in ANY language
+
+Analyze this text and determine:
+1. Is it a legal/policy document in ANY language?
 2. What language is it written in?
 
 Respond with ONLY a JSON object in this exact format:
 {
   "isLegalDocument": boolean,
-  "documentType": "terms_of_service" | "privacy_policy" | "user_agreement" | "eula" | "other" | "not_legal",
+  "documentType": "terms_of_service" | "privacy_policy" | "user_agreement" | "eula" | "other",
   "confidence": number (0-100),
-  "detectedLanguage": "language name (e.g., English, Tamil, Hindi, Russian, Japanese)",
-  "reason": "string explaining why"
+  "detectedLanguage": "language name in English (e.g., English, Tamil, Hindi, Russian, Japanese)",
+  "reason": "string explaining why this is or isn't a legal document"
 }
 
 Text to classify:
-${documentText.substring(0, 3000)}`;
+${documentText.substring(0, 5000)}`;
 
     const validationResponse = await fetch("https://ai.gateway.lovable.dev/v1/chat/completions", {
       method: "POST",
@@ -114,8 +123,8 @@ ${documentText.substring(0, 3000)}`;
         messages: [
           { role: "user", content: validationPrompt }
         ],
-        temperature: 0.05,
-        max_tokens: 500,
+        temperature: 0.1,
+        max_tokens: 800,
       }),
     });
 
@@ -133,24 +142,36 @@ ${documentText.substring(0, 3000)}`;
           detectedLanguage = validation.detectedLanguage || 'English';
           documentType = validation.documentType || 'terms_of_service';
           
-          console.log("Document validated:", validation.documentType, "Language:", detectedLanguage, "Confidence:", validation.confidence);
+          console.log("Document validated:", {
+            type: validation.documentType,
+            language: detectedLanguage,
+            confidence: validation.confidence,
+            reason: validation.reason,
+            isLegal: validation.isLegalDocument
+          });
           
-          if (!validation.isLegalDocument || validation.documentType === "not_legal" || validation.confidence < 60) {
-            console.log("Document validation failed:", validation);
-            return new Response(
-              JSON.stringify({ 
-                error: "This document does not appear to contain Terms & Conditions or a Privacy Policy. Please provide a valid legal document for analysis.",
-                validationInfo: validation,
-                detectedLanguage: detectedLanguage
-              }),
-              { 
-                status: 400, 
-                headers: { ...corsHeaders, "Content-Type": "application/json" } 
-              }
-            );
+          // More lenient validation - accept if confidence >= 40 or if it's identified as legal
+          if (!validation.isLegalDocument || validation.documentType === "not_legal") {
+            if (validation.confidence < 40) {
+              console.log("Document validation failed:", validation);
+              return new Response(
+                JSON.stringify({ 
+                  error: `This document does not appear to be a Terms & Conditions or Privacy Policy document. Detected language: ${detectedLanguage}. Reason: ${validation.reason}`,
+                  validationInfo: validation,
+                  detectedLanguage: detectedLanguage
+                }),
+                { 
+                  status: 400, 
+                  headers: { ...corsHeaders, "Content-Type": "application/json" } 
+                }
+              );
+            } else {
+              // Low confidence but proceed anyway
+              console.log("Low confidence validation, but proceeding with analysis");
+            }
           }
         } catch (e) {
-          console.warn("Could not parse validation response, proceeding with analysis");
+          console.warn("Could not parse validation response, proceeding with analysis anyway:", e);
         }
       }
     }
