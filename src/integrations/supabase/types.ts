@@ -185,7 +185,7 @@ export type Database = {
     }
     Functions: {
       get_platform_stats: {
-        Args: Record<PropertyKey, never>
+        Args: never
         Returns: {
           total_analyses: number
           total_risk_issues: number
